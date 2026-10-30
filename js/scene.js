@@ -17,7 +17,7 @@ const COLORS = { hot: 0xff2e88, cyan: 0x29e0ff, amber: 0xffb547, violet: 0x9b5cf
 const BPM = 126;
 
 const loader = document.getElementById("loader");
-const hideLoader = () => loader.classList.add("done");
+const hideLoader = () => (window.__hideLoader ? window.__hideLoader() : loader?.classList.add("done"));
 
 const canvas = document.getElementById("stage");
 const lowPower = matchMedia("(max-width: 768px), (pointer: coarse)").matches || (navigator.hardwareConcurrency || 8) <= 4;
@@ -393,9 +393,18 @@ function init() {
   ]);
   let scrollP = 0, smoothP = 0;
   const mouse = new THREE.Vector2(), smoothMouse = new THREE.Vector2();
+  let dimQueued = false;
   const onScroll = () => {
     const max = document.documentElement.scrollHeight - innerHeight;
     scrollP = max > 0 ? scrollY / max : 0;
+    // phones dim the stage behind the content by fading the canvas: costs nothing while scrolling
+    if (lowPower && !dimQueued) {
+      dimQueued = true;
+      requestAnimationFrame(() => {
+        dimQueued = false;
+        canvas.style.opacity = (1 - Math.min(1, scrollY / innerHeight) * 0.5).toFixed(3);
+      });
+    }
   };
   addEventListener("scroll", onScroll, { passive: true });
   addEventListener("pointermove", e => mouse.set(e.clientX / innerWidth - 0.5, e.clientY / innerHeight - 0.5));
@@ -426,6 +435,7 @@ function init() {
     const rawDt = clock.getDelta();
     const dt = Math.min(rawDt, 0.05);
     const heroFade = Math.min(1, scrollY / innerHeight);
+    if (lowPower && firstFrame && performance.now() - (window.__lastScroll || 0) < 180) return;
     if (lowPower && firstFrame && heroFade >= 1) {
       if (frozen) return;
       frozen = true; // fall through once to paint the dimmed frame, then stop
@@ -463,7 +473,7 @@ function init() {
       camLook.y -= 4.2 * (1 - heroFade);
       camera.lookAt(camLook);
     }
-    renderer.toneMappingExposure = 1.05 - heroFade * (camera.aspect < 0.8 ? 0.6 : 0.45);
+    if (!lowPower) renderer.toneMappingExposure = 1.05 - heroFade * 0.45;
     const wantRatio = heroFade > 0.95 ? readingRatio : heroFade < 0.8 ? heroRatio : renderer.getPixelRatio();
     if (wantRatio !== renderer.getPixelRatio()) setRatio(wantRatio);
 

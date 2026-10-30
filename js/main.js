@@ -8,9 +8,22 @@ window.FEST = {
   dateLabel: "5–6 December 2026",
 };
 
+// Last scroll time, shared with the 3D scene and the ring so they can sit still while a finger scrolls.
+window.__lastScroll = 0;
+addEventListener("scroll", () => { window.__lastScroll = performance.now(); }, { passive: true });
+const isScrolling = () => performance.now() - window.__lastScroll < 180;
+
 // The loader never blocks the page for long, even if the 3D scene is slow or fails to load.
 (() => {
-  const hide = () => document.getElementById("loader").classList.add("done");
+  const loader = document.getElementById("loader");
+  let hidden = false;
+  const hide = () => {
+    if (hidden) return;
+    hidden = true;
+    loader.classList.add("done");
+    setTimeout(() => loader.remove(), 1000); // stop its animations for good once it has faded
+  };
+  window.__hideLoader = hide;
   setTimeout(hide, 2500);
   addEventListener("load", () => setTimeout(hide, 600));
 })();
@@ -124,6 +137,16 @@ window.FEST = {
     });
   }
 
+  // ---- Google Map: load only when asked (it is a whole app) ----
+  const mapBtn = document.querySelector(".map-load");
+  mapBtn?.addEventListener("click", () => {
+    const frame = document.createElement("iframe");
+    frame.title = "Map to United University, Prayagraj";
+    frame.referrerPolicy = "no-referrer-when-downgrade";
+    frame.src = mapBtn.dataset.src;
+    mapBtn.replaceWith(frame);
+  }, { once: true });
+
   // ---- YouTube: load the player only when clicked ----
   document.querySelectorAll(".yt").forEach(btn => btn.addEventListener("click", () => {
     const frame = document.createElement("iframe");
@@ -159,6 +182,10 @@ window.FEST = {
   const frame = now => {
     const dt = Math.min((now - prev) / 1000, 0.05);
     prev = now;
+    if (!dragging && isScrolling()) { // hold still while the page scrolls
+      raf = visible ? requestAnimationFrame(frame) : 0;
+      return;
+    }
     if (!dragging) {
       const idle = hovering ? HOVER_IDLE : IDLE;
       velocity = idle + (velocity - idle) * Math.exp(-dt * 2.2); // momentum fades into the idle spin

@@ -492,3 +492,38 @@ body.no-webgl .hero-fallback, body.no-font .hero-fallback { display: block; }
   .reveal.in { transition-duration: .6s; }
   [data-tilt] { will-change: auto; }
 }
+
+/* tap-to-load map */
+.map { display: grid; }
+.map-load {
+  display: grid; place-content: center; justify-items: center; gap: 6px; width: 100%; min-height: 340px; padding: 24px;
+  border: 0; cursor: pointer; color: var(--ink); text-align: center;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(255,46,136,.25), transparent 45%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.04) 0 1px, transparent 1px 34px),
+    #100d1a;
+}
+.map-load strong { font: 700 1.1rem var(--display); }
+.map-load small { color: var(--muted); }
+.map-pin { width: 34px; height: 34px; margin-bottom: 6px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--grad); box-shadow: 0 10px 30px rgba(255,46,136,.5); }
+.map-load:hover strong { color: var(--cyan); }
+
+/* ---------- touch devices: keep scrolling on the compositor ----------
+   No blend modes, CSS filters, endless animations or huge blurred shadows, and let the
+   browser skip off-screen sections entirely. */
+@media (max-width: 900px), (pointer: coarse) {
+  .photo-3d::after, .pano::after { display: none; }
+  .map iframe { filter: none; }
+  .dot, .loader-logo, .scroll-hint span { animation: none; }
+  .photo-3d, .pano, .logo-card, .yt, .glass, .card, .ev, .ring figure { box-shadow: 0 12px 28px -14px rgba(0,0,0,.85), 0 0 0 1px var(--line); }
+  .logo-card { box-shadow: 0 12px 28px -14px rgba(0,0,0,.85); }
+  .btn { box-shadow: 0 6px 18px -8px rgba(255,46,136,.7); }
+  .btn:hover { transform: none; }
+  .video figcaption, .head .muted, .tagline { text-shadow: none; }
+  .ring-stage::after { filter: none; opacity: .6; }
+  .ev:hover { transform: none; }
+  .ev:hover .ev-flyer img, .yt:hover img { transform: none; }
+  .reveal { transform: translateY(16px); }
+  .section:not(.hero) { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+}
