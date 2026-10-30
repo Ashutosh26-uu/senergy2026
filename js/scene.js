@@ -34,8 +34,8 @@ try {
 if (renderer) init();
 
 function init() {
-  let heroRatio = Math.min(devicePixelRatio, lowPower ? 1 : 1.75);
-  const readingRatio = Math.min(heroRatio, lowPower ? 0.75 : 1); // dimmed background behind content: fewer pixels, smoother scrolling
+  let heroRatio = Math.min(devicePixelRatio, lowPower ? 1 : 1.25); // bloom softens edges anyway; above 1.25 costs far more than it shows
+  const readingRatio = Math.min(heroRatio, lowPower ? 0.75 : 0.85); // dimmed background behind content: fewer pixels, smoother scrolling
   renderer.setPixelRatio(heroRatio);
   renderer.setSize(innerWidth, innerHeight);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -368,7 +368,8 @@ function init() {
     composer.addPass(bloom);
     composer.addPass(new OutputPass());
   }
-  const draw = () => (composer ? composer.render() : renderer.render(scene, camera));
+  // bloom only for the full show in the hero; behind the dimmed content it is barely visible but costs the most
+  const draw = withBloom => (composer && withBloom ? composer.render() : renderer.render(scene, camera));
   const setRatio = r => {
     renderer.setPixelRatio(r);
     composer?.setPixelRatio(r);
@@ -443,10 +444,11 @@ function init() {
       frozen = false;
     }
 
-    // over ~40 ms per frame (under 25 fps) for 1.5 s in a row: lower resolution, then drop the extras
+    // frames slower than ~45 fps (desktop) / ~33 fps (phones) for a second: lower resolution, then drop the extras
     if (firstFrame && !frozen) {
-      slowTime = rawDt > 0.04 && rawDt < 0.5 ? slowTime + rawDt : Math.max(0, slowTime - rawDt);
-      if (slowTime > 1.5 && quality < 3) {
+      const slowFrame = lowPower ? 0.03 : 0.022;
+      slowTime = rawDt > slowFrame && rawDt < 0.5 ? slowTime + rawDt : Math.max(0, slowTime - rawDt);
+      if (slowTime > 1 && quality < 3) {
         slowTime = 0;
         quality++;
         if (quality <= 2) { heroRatio = Math.max(0.6, heroRatio * 0.8); setRatio(heroRatio); }
@@ -559,7 +561,7 @@ function init() {
     title.position.y = 7.1 + Math.sin(t * 0.8) * 0.12;
     if (title.userData.year) title.userData.year.material.emissiveIntensity = 1.2 + kick * 1.4;
 
-    draw();
+    draw(heroFade < 0.95);
     if (!firstFrame) { firstFrame = true; setTimeout(hideLoader, 400); }
   });
 }
