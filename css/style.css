@@ -474,3 +474,21 @@ body.no-webgl .hero-fallback, body.no-font .hero-fallback { display: block; }
   .tagline { display: none; }
 }
 .video figcaption { display: inline-block; padding: 6px 12px; border-radius: 999px; background: rgba(7,6,11,.7); backdrop-filter: blur(8px); }
+
+/* ---------- phones & touch: no live blur over the moving 3D canvas ----------
+   backdrop-filter re-blurs everything behind it on every frame; on phones that is
+   the main cause of scroll jank. Solid tinted panels look nearly the same. */
+@media (max-width: 900px), (pointer: coarse) {
+  *, *::before, *::after, .lightbox::backdrop { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  .grain { display: none; }
+  .nav { background: rgba(10, 8, 18, .92); }
+  .glass { background: rgba(16, 13, 26, .9); }
+  .card, .ev, .edition { background: rgba(16, 13, 26, .92); }
+  .hero-meta > div, .countdown div { background: rgba(10, 8, 18, .78); }
+  .tabs button { background: rgba(10, 8, 18, .88); }
+  .btn-ghost { background: rgba(20, 16, 32, .85); }
+  .photo-3d figcaption, .video figcaption { background: rgba(0, 0, 0, .78); }
+  .lightbox::backdrop { background: rgba(4, 3, 8, .94); }
+  .reveal.in { transition-duration: .6s; }
+  [data-tilt] { will-change: auto; }
+}

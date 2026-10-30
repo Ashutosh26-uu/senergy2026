@@ -20,7 +20,7 @@ const loader = document.getElementById("loader");
 const hideLoader = () => loader.classList.add("done");
 
 const canvas = document.getElementById("stage");
-const lowPower = matchMedia("(max-width: 768px)").matches || (navigator.hardwareConcurrency || 8) <= 4;
+const lowPower = matchMedia("(max-width: 768px), (pointer: coarse)").matches || (navigator.hardwareConcurrency || 8) <= 4;
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 let renderer;
@@ -34,7 +34,7 @@ try {
 if (renderer) init();
 
 function init() {
-  const heroRatio = Math.min(devicePixelRatio, lowPower ? 1.25 : 1.75);
+  let heroRatio = Math.min(devicePixelRatio, lowPower ? 1 : 1.75);
   const readingRatio = Math.min(heroRatio, lowPower ? 0.75 : 1); // dimmed background behind content: fewer pixels, smoother scrolling
   renderer.setPixelRatio(heroRatio);
   renderer.setSize(innerWidth, innerHeight);
@@ -49,7 +49,7 @@ function init() {
   const envTex = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
 
   // ---------- lighting ----------
-  scene.add(new THREE.HemisphereLight(0x2a1840, 0x000000, 0.5));
+  scene.add(new THREE.HemisphereLight(0x2a1840, 0x000000, lowPower ? 1.1 : 0.5)); // phones skip spotlights, so lift the fill
   const screenGlow = new THREE.PointLight(COLORS.violet, 60, 30, 1.6);
   screenGlow.position.set(0, 6, -5);
   scene.add(screenGlow);
@@ -214,7 +214,7 @@ function init() {
     rig.add(yoke, lens, beam);
     scene.add(rig);
     let spot = null;
-    if (i % 2 === 0) {
+    if (i % 2 === 0 && !lowPower) {
       spot = new THREE.SpotLight(color, 900, 60, 0.2, 0.55, 1.6);
       spot.position.copy(rig.position).add(new THREE.Vector3(0, -0.6, 0.6));
       scene.add(spot, spot.target);
@@ -223,7 +223,7 @@ function init() {
   }
 
   // front wash so the stage deck and title catch light
-  for (const [x, c] of [[-6, COLORS.hot], [6, COLORS.cyan]]) {
+  for (const [x, c] of lowPower ? [] : [[-6, COLORS.hot], [6, COLORS.cyan]]) {
     const wash = new THREE.SpotLight(c, 260, 50, 0.5, 0.8, 1.5);
     wash.position.set(x, 12, 14);
     wash.target.position.set(x * 0.3, 4, -4);
@@ -258,7 +258,7 @@ function init() {
   const cheerGeo = mergeGeometries([body.clone(), head.clone(), armL, armR]);
   const crowdMat = new THREE.MeshStandardMaterial({ color: 0x0d0c12, roughness: 0.75, metalness: 0.15 });
   const people = [];
-  const cols = lowPower ? 26 : 40, rows = lowPower ? 14 : 22;
+  const cols = lowPower ? 18 : 40, rows = lowPower ? 10 : 22;
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const x = -17 + (34 / cols) * c + (Math.random() - 0.5) * 0.6;
@@ -296,7 +296,7 @@ function init() {
   scene.add(phonePts);
 
   // ---------- haze ----------
-  const hazeCount = lowPower ? 500 : 1400;
+  const hazeCount = lowPower ? 140 : 1400;
   const hazePos = new Float32Array(hazeCount * 3);
   for (let i = 0; i < hazeCount; i++) {
     hazePos[i * 3] = (Math.random() - 0.5) * 44;
@@ -305,11 +305,11 @@ function init() {
   }
   const hazeGeo = new THREE.BufferGeometry();
   hazeGeo.setAttribute("position", new THREE.BufferAttribute(hazePos, 3));
-  const haze = new THREE.Points(hazeGeo, new THREE.PointsMaterial({ size: 3.2, map: sprite, color: 0x6b5a8a, transparent: true, opacity: 0.05, depthWrite: false, blending: THREE.AdditiveBlending }));
+  const haze = new THREE.Points(hazeGeo, new THREE.PointsMaterial({ size: lowPower ? 2.2 : 3.2, map: sprite, color: 0x6b5a8a, transparent: true, opacity: lowPower ? 0.07 : 0.05, depthWrite: false, blending: THREE.AdditiveBlending }));
   scene.add(haze);
 
   // ---------- confetti ----------
-  const confettiCount = reduceMotion ? 0 : lowPower ? 180 : 420;
+  const confettiCount = reduceMotion ? 0 : lowPower ? 80 : 420;
   const confetti = new THREE.InstancedMesh(
     new THREE.PlaneGeometry(0.09, 0.15),
     new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, roughness: 0.4, metalness: 0.6, emissive: 0x222222 }),
@@ -335,7 +335,9 @@ function init() {
       g.center();
       return g;
     };
-    const chrome = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 1, roughness: 0.2, envMap: envTex, envMapIntensity: 0.9, clearcoat: 1, clearcoatRoughness: 0.08 });
+    const chrome = lowPower
+      ? new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.2, envMap: envTex, envMapIntensity: 1.1 })
+      : new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 1, roughness: 0.2, envMap: envTex, envMapIntensity: 0.9, clearcoat: 1, clearcoatRoughness: 0.08 });
     const word = new THREE.Mesh(make(window.FEST?.name || "SYNERGY", 2.15, 0.55), chrome);
     const year = new THREE.Mesh(make(window.FEST?.year || "2026", 1.05, 0.3),
       new THREE.MeshStandardMaterial({ color: COLORS.hot, emissive: COLORS.hot, emissiveIntensity: 1.6, roughness: 0.3, metalness: 0.4 }));
@@ -345,24 +347,32 @@ function init() {
     hideLoader();
   }, undefined, () => { document.body.classList.add("no-font"); hideLoader(); });
 
-  // ---------- post-processing ----------
-  const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
-  // Clamp HDR hot spots (and any NaN) so bloom's blur chain can't smear them across the frame.
-  composer.addPass(new ShaderPass({
-    uniforms: { tDiffuse: { value: null } },
-    vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }",
-    fragmentShader: `
-      uniform sampler2D tDiffuse; varying vec2 vUv;
-      void main(){
-        vec4 c = texture2D(tDiffuse, vUv);
-        if (any(isnan(c)) || any(isinf(c))) c = vec4(0., 0., 0., 1.);
-        gl_FragColor = vec4(clamp(c.rgb, 0., 24.), 1.);
-      }`,
-  }));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), lowPower ? 0.55 : 0.7, 0.5, 0.72);
-  composer.addPass(bloom);
-  composer.addPass(new OutputPass());
+  // ---------- post-processing (desktop only; phones render straight to the screen) ----------
+  let composer = null, bloom = null;
+  if (!lowPower) {
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    // Clamp HDR hot spots (and any NaN) so bloom's blur chain can't smear them across the frame.
+    composer.addPass(new ShaderPass({
+      uniforms: { tDiffuse: { value: null } },
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }",
+      fragmentShader: `
+        uniform sampler2D tDiffuse; varying vec2 vUv;
+        void main(){
+          vec4 c = texture2D(tDiffuse, vUv);
+          if (any(isnan(c)) || any(isinf(c))) c = vec4(0., 0., 0., 1.);
+          gl_FragColor = vec4(clamp(c.rgb, 0., 24.), 1.);
+        }`,
+    }));
+    bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.7, 0.5, 0.72);
+    composer.addPass(bloom);
+    composer.addPass(new OutputPass());
+  }
+  const draw = () => (composer ? composer.render() : renderer.render(scene, camera));
+  const setRatio = r => {
+    renderer.setPixelRatio(r);
+    composer?.setPixelRatio(r);
+  };
 
   // ---------- camera path driven by page scroll ----------
   const camPath = new THREE.CatmullRomCurve3([
@@ -397,8 +407,8 @@ function init() {
     camera.fov = aspect < 1 ? 50 + (1 - aspect) * 42 : 50;
     camera.updateProjectionMatrix();
     renderer.setSize(innerWidth, innerHeight);
-    composer.setSize(innerWidth, innerHeight);
-    bloom.resolution.set(innerWidth, innerHeight);
+    composer?.setSize(innerWidth, innerHeight);
+    bloom?.resolution.set(innerWidth, innerHeight);
   };
   addEventListener("resize", fit);
   fit();
@@ -409,9 +419,30 @@ function init() {
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   const timeScale = reduceMotion ? 0.2 : 1;
   let firstFrame = false;
+  let frozen = false;               // phones: hold one dimmed frame while the visitor reads below the hero
+  let slowTime = 0, quality = 0;    // auto quality: step down if frames stay slow
 
   renderer.setAnimationLoop(() => {
-    const dt = Math.min(clock.getDelta(), 0.05);
+    const rawDt = clock.getDelta();
+    const dt = Math.min(rawDt, 0.05);
+    const heroFade = Math.min(1, scrollY / innerHeight);
+    if (lowPower && firstFrame && heroFade >= 1) {
+      if (frozen) return;
+      frozen = true; // fall through once to paint the dimmed frame, then stop
+    } else {
+      frozen = false;
+    }
+
+    // over ~40 ms per frame (under 25 fps) for 1.5 s in a row: lower resolution, then drop the extras
+    if (firstFrame && !frozen) {
+      slowTime = rawDt > 0.04 && rawDt < 0.5 ? slowTime + rawDt : Math.max(0, slowTime - rawDt);
+      if (slowTime > 1.5 && quality < 3) {
+        slowTime = 0;
+        quality++;
+        if (quality <= 2) { heroRatio = Math.max(0.6, heroRatio * 0.8); setRatio(heroRatio); }
+        else { haze.visible = false; confetti.visible = false; }
+      }
+    }
     const t = clock.elapsedTime * timeScale;
     const beatPhase = (t * BPM) / 60;
     const kick = Math.pow(1 - (beatPhase % 1), 3);
@@ -427,7 +458,6 @@ function init() {
     camera.position.copy(camPos);
     camera.lookAt(camLook);
     // full show in the hero, dimmer behind the reading sections
-    const heroFade = Math.min(1, scrollY / innerHeight);
     // portrait phones: tilt down in the hero so the 3D title sits above the hero text
     if (camera.aspect < 0.8) {
       camLook.y -= 4.2 * (1 - heroFade);
@@ -435,10 +465,7 @@ function init() {
     }
     renderer.toneMappingExposure = 1.05 - heroFade * (camera.aspect < 0.8 ? 0.6 : 0.45);
     const wantRatio = heroFade > 0.95 ? readingRatio : heroFade < 0.8 ? heroRatio : renderer.getPixelRatio();
-    if (wantRatio !== renderer.getPixelRatio()) {
-      renderer.setPixelRatio(wantRatio);
-      composer.setPixelRatio(wantRatio);
-    }
+    if (wantRatio !== renderer.getPixelRatio()) setRatio(wantRatio);
 
     // LED wall + glow
     ledMat.uniforms.t.value = t;
@@ -522,7 +549,7 @@ function init() {
     title.position.y = 7.1 + Math.sin(t * 0.8) * 0.12;
     if (title.userData.year) title.userData.year.material.emissiveIntensity = 1.2 + kick * 1.4;
 
-    composer.render();
+    draw();
     if (!firstFrame) { firstFrame = true; setTimeout(hideLoader, 400); }
   });
 }
