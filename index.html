@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SYNERGY 2026 · United University</title>
+<meta name="description" content="SYNERGY 2026, the annual fest of United University, Prayagraj. Let the Synergy Ignite, with Sachin-Jigar live at Star Night.">
+<meta name="theme-color" content="#07060b">
+<link rel="icon" href="assets/img/logo_small.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+
+<div id="loader" aria-hidden="true">
+  <div class="loader-inner">
+    <img class="loader-logo" src="assets/img/synergy-2026-logo.png" alt="SYNERGY 2026: Let the Synergy Ignite">
+    <div class="loader-bar"><i></i></div>
+    <small>Setting up the stage…</small>
+  </div>
+</div>
+
+<canvas id="stage" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="nav">
+  <a href="#top" class="brand" aria-label="United University home">
+    <span class="brand-logo"><img src="assets/img/logo_small.png" alt="United University"></span>
+  </a>
+  <nav class="links" aria-label="Sections">
+    <a href="#about">About</a>
+    <a href="#events">Events</a>
+    <a href="#starnight">Star Night</a>
+    <a href="#synergy2025">2025</a>
+    <a href="#gallery">Gallery</a>
+    <a href="#venue">Venue</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <a class="btn btn-sm" href="https://www.instagram.com/united_university/" target="_blank" rel="noopener">Get updates</a>
+  <button class="menu" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <p class="eyebrow reveal">United University, Prayagraj presents</p>
+    <h1 class="sr-only">SYNERGY 2026 — Annual Fest of United University</h1>
+    <h1 class="hero-fallback" aria-hidden="true">SYNERGY<br><span>2026</span></h1>
+    <div class="hero-bottom">
+      <p class="tagline reveal">Let the Synergy Ignite. Headlining Star Night: <strong>Sachin-Jigar LIVE</strong>.</p>
+      <div class="hero-meta reveal">
+        <div><small>Fest</small><strong id="fest-date">5–6 December 2026</strong></div>
+        <div><small>Star Night · 6 Dec</small><strong>Sachin-Jigar LIVE</strong></div>
+      </div>
+      <p class="countdown-label reveal" id="countdown-label" hidden>Fest begins in</p>
+      <div class="countdown reveal" id="countdown" hidden>
+        <div><b data-k="d">00</b><small>Days</small></div>
+        <div><b data-k="h">00</b><small>Hours</small></div>
+        <div><b data-k="m">00</b><small>Min</small></div>
+        <div><b data-k="s">00</b><small>Sec</small></div>
+      </div>
+      <div class="cta reveal">
+        <a class="btn" href="#events">SYNERGY 2026</a>
+        <a class="btn btn-ghost" href="#synergy2025">SYNERGY 2025 events</a>
+      </div>
+    </div>
+    <a href="#about" class="scroll-hint" aria-label="Scroll down"><span></span></a>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="section" id="about">
+    <div class="wrap grid-2">
+      <div class="glass reveal">
+        <p class="kicker">About the fest</p>
+        <h2>Where every school of United comes alive.</h2>
+        <p>SYNERGY is the annual fest of <strong>United University</strong>: engineering, law, design, pharmacy, nursing, hotel management, mass communication, agriculture, commerce and more, all on one stage. It's days of competition, culture and creativity across the Jhalwa campus, ending in a Star Night under the lights.</p>
+        <p>From "Pulse of United" in 2024 to "Let the Synergy Ignite" in 2025 and 2026, every edition has ended in a packed open-air concert. SYNERGY 2026 brings <strong>Sachin-Jigar</strong> to the main stage.</p>
+        <div class="stats">
+          <div><b data-count="30">0</b><span>+</span><small>Courses</small></div>
+          <div><b data-count="4150">0</b><span>+</span><small>Students</small></div>
+          <div><b data-count="250">0</b><span>+</span><small>Faculty</small></div>
+          <div><b data-count="1998">0</b><small>United Group since</small></div>
+        </div>
+      </div>
+      <figure class="photo-3d reveal" data-tilt>
+        <img src="assets/img/glob_4.jpg" alt="United students on a global exposure tour" loading="lazy">
+        <figcaption>United students on a global exposure tour</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- SYNERGY 2026 -->
+  <section class="section" id="events">
+    <div class="wrap grid-2">
+      <div class="glass reveal">
+        <p class="kicker">SYNERGY 2026</p>
+        <h2>5–6 December 2026</h2>
+        <p>Two days of SYNERGY at United University, Prayagraj, closing with a live Star Night on 6 December.</p>
+        <ol class="plan">
+          <li><b>5 Dec</b><span>Fest day: competitions and events</span></li>
+          <li><b>6 Dec</b><span>Fest day + Star Night: <strong>Sachin-Jigar LIVE</strong></span></li>
+        </ol>
+        <div class="soon"><span class="dot"></span>The SYNERGY 2026 event list will be shared soon.</div>
+      </div>
+      <figure class="logo-card reveal" data-tilt>
+        <img src="assets/img/synergy-2026-logo.png" alt="SYNERGY 2026: Let the Synergy Ignite">
+      </figure>
+    </div>
+  </section>
+
+  <!-- STAR NIGHT -->
+  <section class="section" id="starnight">
+    <div class="wrap grid-2 reverse">
+      <div class="glass reveal">
+        <p class="kicker">Star Night · 6 December 2026</p>
+        <h2>Sachin-Jigar LIVE</h2>
+        <p>"The wait is over." United University has announced composer duo <strong>Sachin-Jigar</strong>, Sachin Sanghvi and Jigar Saraiya, as the SYNERGY 2026 headliners. Expect a night of their Bollywood hits like <em>Apna Bana Le</em>, <em>Aaj Ki Raat</em>, <em>Tum Hi Ho Bandhu</em> and <em>Sun Saathiya</em>.</p>
+        <div class="mystery">
+          <img class="artist-avatar" src="assets/img/sachin-jigar-wide.jpg" alt="Sachin Sanghvi and Jigar Saraiya">
+          <div>
+            <strong>Sachin-Jigar</strong>
+            <small>Live performance · 6 Dec 2026 · United University campus</small>
+          </div>
+        </div>
+        <a class="btn" href="https://www.youtube.com/shorts/Yju1cMFxBGc" target="_blank" rel="noopener">Watch the announcement</a>
+      </div>
+      <figure class="video short reveal">
+        <button class="yt" data-id="Yju1cMFxBGc" aria-label="Play the Sachin-Jigar announcement video">
+          <img src="assets/img/sachin-jigar-wide.jpg" alt="Sachin Sanghvi and Jigar Saraiya" class="sj-photo">
+          <span class="shade" aria-hidden="true"></span>
+          <img src="assets/img/synergy-2026-logo.png" alt="SYNERGY 2026 logo" class="logo-poster">
+          <span class="poster-title">SACHIN-JIGAR<br><small>LIVE AT SYNERGY 2026</small></span>
+          <span class="play" aria-hidden="true"></span>
+        </button>
+        <figcaption class="photo-credit">Photo: <a href="https://commons.wikimedia.org/wiki/File:Sachin_-_Jigar.jpg" target="_blank" rel="noopener">Bollywood Hungama</a>, <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- SYNERGY 2025 ARCHIVE -->
+  <section class="section" id="synergy2025">
+    <div class="wrap">
+      <div class="head-row reveal">
+        <div class="head">
+          <p class="kicker">Last edition</p>
+          <h2>SYNERGY 2025</h2>
+          <p class="muted">Let the Synergy Ignite. 28–29 November 2025, with Ankit Tiwari live at Star Night. Tap a flyer to see it full size.</p>
+        </div>
+        <img class="logo-25" src="assets/img/synergy-2025-logo.png" alt="SYNERGY 2025 logo">
+      </div>
+
+      <div class="tabs reveal" role="tablist" aria-label="SYNERGY 2025 days">
+        <button role="tab" data-day="all" aria-selected="true"><b>All</b><small>9 events</small></button>
+        <button role="tab" data-day="28" aria-selected="false"><b>28 Nov</b><small>Day 1</small></button>
+        <button role="tab" data-day="29" aria-selected="false"><b>29 Nov</b><small>Day 2 + Star Night</small></button>
+      </div>
+
+      <div class="ev-grid" id="ev-grid">
+        <article class="ev" data-day="28">
+          <button class="ev-flyer" data-flyer="assets/flyers/rhythm-rumble.jpg" aria-label="View the Rhythm Rumble Reloaded flyer"><img src="assets/flyers/rhythm-rumble.jpg" alt="Rhythm Rumble Reloaded flyer" loading="lazy"></button>
+          <div class="ev-body">
+            <span class="tag">Dance</span>
+            <h3>Rhythm Rumble Reloaded</h3>
+            <p>Dance competition (auditions held on 26 November)</p>
+            <dl><div><dt>Date</dt><dd>28 Nov 2025</dd></div><div><dt>Time</dt><dd>Friday</dd></div><div><dt>Venue</dt><dd>United University</dd></div></dl>
+          </div>
+        </article>
+        <article class="ev" data-day="28">
+          <button class="ev-flyer" data-flyer="assets/flyers/war-of-bands.jpg" aria-label="View the War of Bands: Sound Surge flyer"><img src="assets/flyers/war-of-bands.jpg" alt="War of Bands: Sound Surge flyer" loading="lazy"></button>
+          <div class="ev-body">
+            <span class="tag">Music</span>
+            <h3>War of Bands: Sound Surge</h3>
+            <p>Band battle, UU × UIMS</p>
+            <dl><div><dt>Date</dt><dd>28 Nov 2025</dd></div><div><dt>Time</dt><dd>10 AM – 12 PM</dd></div><div><dt>Venue</dt><dd>UU New Auditorium</dd></div></dl>
+          </div>
+        </article>
+        <article class="ev" data-day="28">
+          <button class="ev-flyer" data-flyer="assets/flyers/rangavalli.jpg" aria-label="View the Rangavalli flyer"><img src="assets/flyers/rangavalli.jpg" alt="Rangavalli flyer" loading="lazy"></button>
+          <div class="ev-body">
+            <span class="tag">Art</span>
+            <h3>Rangavalli</h3>
+            <p>Rangoli competition</p>
+            <dl><div><dt>Date</dt><dd>28 Nov 2025</dd></div><div><dt>Time</dt><dd>9:30 – 11:30 AM</dd></div><div><dt>Venue</dt><dd>Fashion Lab / UU Reception Area</dd></div></dl>
+          </div>
+        </article>
+        <article class="ev" data-day="28">
+          <button class="ev-flyer" data-flyer="assets/flyers/tshirt-painting.jpg" aria-label="View the T-Shirt Painting Competition flyer"><img src="assets/flyers/tshirt-painting.jpg" alt="T-Shirt Painting Competition flyer" loading="lazy"></button>
+          <div class="ev-body">
+            <span class="tag">Art</span>
+            <h3>T-Shirt Painting Competition</h3>
+            <p>Splash your imagination</p>
+            <dl><div><dt>Date</dt><dd>28 Nov 2025</dd></div><div><dt>Time</dt><dd>9:30 – 11:30 AM</dd></div><div><dt>Venue</dt><dd>Fashion Lab / UU Reception Area</dd></div></dl>
+          </div>
+        </article>
+        <article class="ev" data-day="29">
+          <button class="ev-flyer" data-flyer="assets/flyers/brain-booster.jpg" aria-label="View the Brain Booster: Main Round flyer"><img src="assets/flyers/brain-booster.jpg" alt="Brain Booster: Main Round flyer" loading="lazy"></button>
+          <div class="ev-body">
+            <span class="tag">Quiz</span>
+            <h3>Brain Booster: Main Round</h3>
+            <p>Final round of the quiz</p>
+            <dl><div><dt>Date</dt><dd>29 Nov 2025</dd></div><div><dt>Time</dt><dd>10 AM – 12 PM</dd></div><div><dt>Venue</dt><dd>Old UU Auditorium</dd></div></dl>
+          </div>
+        </article>
+        <article class="ev" data-day="29">
+          <button class="ev-flyer" data-flyer="assets/flyers/tattoo.jpg" aria-label="View the Tattoo Competition flyer"><img src="assets/flyers/tattoo.jpg" alt="Tattoo Competition flyer" loading="lazy"></button>
+          <div class="ev-body">
+            <span class="tag">Art</span>
+            <h3>Tattoo Competition</h3>
+            <p>Ink it. Draw it. Own it. Victory is in your hands!</p>
+            <dl><div><dt>Date</dt><dd>29 Nov 2025</dd></div><div><dt>Time</dt><dd>11 AM – 12 PM</dd></div><div><dt>Venue</dt><dd>Lawn near Hanuman Ji statue, UIMS</dd></div></dl>
+          </div>
+        </article>
+        <article class="ev" data-day="29">
+          <button class="ev-flyer" data-flyer="assets/flyers/jam.jpg" aria-label="View the JAM: Just A Minute flyer"><img src="assets/flyers/jam.jpg" alt="JAM: Just A Minute flyer" loading="lazy"></button>
+          <div class="ev-body">
+            <span class="tag">Speaking</span>
+            <h3>JAM: Just A Minute</h3>
+            <p>One minute. One mic. One chance.</p>
+            <dl><div><dt>Date</dt><dd>29 Nov 2025</dd></div><div><dt>Time</dt><dd>Saturday</dd></div><div><dt>Venue</dt><dd>UU Moot Court</dd></div></dl>
+          </div>
+        </article>
+        <article class="ev" data-day="29">
+          <button class="ev-flyer" data-flyer="assets/flyers/directors-cut.jpg" aria-label="View the Director's Cut: Draping & Fashion Show flyer"><img src="assets/flyers/directors-cut.jpg" alt="Director's Cut: Draping & Fashion Show flyer" loading="lazy"></button>
+          <div class="ev-body">
+            <span class="tag">Fashion</span>
+            <h3>Director's Cut: Draping & Fashion Show</h3>
+            <p>Theme: Era of Indian Cinema</p>
+            <dl><div><dt>Date</dt><dd>29 Nov 2025</dd></div><div><dt>Time</dt><dd>Saturday</dd></div><div><dt>Venue</dt><dd>United University</dd></div></dl>
+          </div>
+        </article>
+        <article class="ev" data-day="29">
+          <button class="ev-flyer" data-flyer="assets/flyers/live-performance.jpg" aria-label="View the Star Night: Ankit Tiwari LIVE flyer"><img src="assets/flyers/live-performance.jpg" alt="Star Night: Ankit Tiwari LIVE flyer" loading="lazy"></button>
+          <div class="ev-body">
+            <span class="tag">Live</span>
+            <h3>Star Night: Ankit Tiwari LIVE</h3>
+            <p>Our playlists are about to come alive</p>
+            <dl><div><dt>Date</dt><dd>29 Nov 2025</dd></div><div><dt>Time</dt><dd>Night</dd></div><div><dt>Venue</dt><dd>Main ground</dd></div></dl>
+          </div>
+        </article>
+      </div>
+
+      <div class="grid-2 recap">
+        <figure class="video reveal">
+          <button class="yt" data-id="ijBcWvlX1K8" aria-label="Play SYNERGY 2025 recap video">
+            <img src="assets/img/yt-synergy-2025.jpg" alt="SYNERGY 2025: Ankit Tiwari live in concert, 29th November" loading="lazy">
+            <span class="play" aria-hidden="true"></span>
+          </button>
+          <figcaption>Relive SYNERGY 2025: the official recap</figcaption>
+        </figure>
+        <div class="editions">
+          <article class="edition reveal">
+            <img class="dark-badge" src="assets/img/synergy-2024-logo.png" alt="SYNERGY 2024: Pulse of United" loading="lazy">
+            <div><b>2024</b><small>Pulse of United</small></div>
+          </article>
+          <article class="edition reveal">
+            <img src="assets/img/synergy-2025-logo.png" alt="SYNERGY 2025: Let the Synergy Ignite" loading="lazy">
+            <div><b>2025</b><small>28–29 Nov · Ankit Tiwari LIVE</small></div>
+          </article>
+          <article class="edition now reveal">
+            <img src="assets/img/synergy-2026-logo.png" alt="SYNERGY 2026: Let the Synergy Ignite" loading="lazy">
+            <div><b>2026</b><small>5–6 Dec · Sachin-Jigar LIVE</small></div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <dialog class="lightbox" id="lightbox" aria-label="Event flyer">
+    <button class="lb-close" aria-label="Close">×</button>
+    <img alt="">
+  </dialog>
+
+  <!-- GALLERY (3D ring) -->
+  <section class="section" id="gallery">
+    <div class="wrap">
+      <div class="head reveal">
+        <p class="kicker">Life @ United</p>
+        <h2>The campus that hosts the fest</h2>
+        <p class="muted">Drag to spin.</p>
+      </div>
+    </div>
+    <div class="ring-stage reveal" tabindex="0" aria-label="Campus photo carousel. Drag, or use the left and right arrow keys, to spin.">
+      <div class="ring" id="ring">
+        <figure><img src="assets/ring/glob_4.jpg" decoding="async" alt="United students on a global exposure tour"></figure>
+        <figure><img src="assets/ring/audi1.jpg" decoding="async" alt="University auditorium"></figure>
+        <figure><img src="assets/ring/sport1.jpg" decoding="async" alt="Indoor sports complex"></figure>
+        <figure><img src="assets/ring/yt-synergy-2025.jpg" decoding="async" alt="SYNERGY 2025 with Ankit Tiwari"></figure>
+        <figure><img src="assets/ring/ban00015.jpg" decoding="async" alt="Students on global exposure tours"></figure>
+        <figure><img src="assets/ring/ban00049.jpg" decoding="async" alt="Robotics and AI Lab"></figure>
+        <figure><img src="assets/ring/ban00045.jpg" decoding="async" alt="Students selected by Infosys"></figure>
+        <figure><img src="assets/ring/glob_1.jpg" decoding="async" alt="Student group photo on tour"></figure>
+        <figure><img src="assets/ring/canteen.jpg" decoding="async" alt="United Canteen"></figure>
+        <figure><img src="assets/ring/ban00020.jpg" decoding="async" alt="Students building a drone in the lab"></figure>
+        <figure><img src="assets/ring/lib1.jpg" decoding="async" alt="Central library"></figure>
+        <figure><img src="assets/ring/ban00006.jpg" decoding="async" alt="Students in labs and workshops"></figure>
+        <figure><img src="assets/ring/gym_1.jpg" decoding="async" alt="Campus gym"></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- VENUE -->
+  <section class="section" id="venue">
+    <div class="wrap">
+      <figure class="pano reveal" data-tilt>
+        <img src="assets/img/counter-2.jpg" alt="United University campus buildings" loading="lazy">
+      </figure>
+      <div class="grid-2 venue-grid">
+        <div class="glass reveal">
+          <p class="kicker">Venue</p>
+          <h2>United University Campus</h2>
+          <p class="addr">Rawatpur, Jhalwa,<br>Prayagraj, Uttar Pradesh 211012</p>
+          <p class="muted">Corporate office: United Tower, Ground Floor, 53, Leader Road, Prayagraj 211003</p>
+          <a class="btn" href="https://www.google.com/maps?cid=9047562360396434887" target="_blank" rel="noopener">Get directions</a>
+        </div>
+        <div class="map reveal">
+          <iframe title="Map to United University, Prayagraj" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps?q=United+University+Rawatpur+Jhalwa+Prayagraj&output=embed"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section class="section" id="contact">
+    <div class="wrap">
+      <div class="glass contact reveal">
+        <div>
+          <p class="kicker">Contact</p>
+          <h2>Be part of SYNERGY 2026</h2>
+          <p class="muted">Registrations, sponsorships and participation queries:</p>
+        </div>
+        <div class="contact-list">
+          <a href="tel:18001218797"><small>Toll free</small>1800-121-8797</a>
+          <a href="mailto:contact@uniteduniversity.edu.in"><small>Email</small>contact@uniteduniversity.edu.in</a>
+          <a href="https://api.whatsapp.com/send?phone=918189059923" target="_blank" rel="noopener"><small>WhatsApp</small>+91 81890 59923</a>
+        </div>
+        <div class="socials">
+          <a href="https://www.instagram.com/united_university" target="_blank" rel="noopener">Instagram</a>
+          <a href="https://www.facebook.com/UnitedUniversity.edu/" target="_blank" rel="noopener">Facebook</a>
+          <a href="https://www.youtube.com/@uniteduniversityprayagraj4325" target="_blank" rel="noopener">YouTube</a>
+          <a href="https://www.linkedin.com/company/united-university-allahabad/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://twitter.com/UnitedUnivers" target="_blank" rel="noopener">X / Twitter</a>
+          <a href="https://uniteduniversity.edu.in/" target="_blank" rel="noopener">Website</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="foot-grid">
+    <div class="foot-brand">
+      <img class="foot-logo" src="assets/img/synergy-2026-logo.png" alt="SYNERGY 2026">
+      <p>The annual fest of United University, Prayagraj<br><span class="muted">5–6 December 2026 · Rawatpur, Jhalwa, Prayagraj</span></p>
+    </div>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="#events">SYNERGY 2026</a>
+      <a href="#starnight">Star Night</a>
+      <a href="#synergy2025">SYNERGY 2025</a>
+      <a href="#venue">Venue</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </div>
+  <div class="foot-bottom">
+    <p class="muted">Photos, flyers and videos: United University, Prayagraj</p>
+    <p class="credit">Built by <a href="https://reasonateai.com/" target="_blank" rel="noopener">REASONATEAI</a></p>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+<script type="module" src="js/scene.js"></script>
+</body>
+</html>
