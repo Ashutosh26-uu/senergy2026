@@ -12,6 +12,8 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { Reflector } from "three/addons/objects/Reflector.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
+window.__sceneLoaded = true; // main.js falls back to the photo background if three.js never arrives
+
 const FONT_URL = "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json";
 const COLORS = { hot: 0xff2e88, cyan: 0x29e0ff, amber: 0xffb547, violet: 0x9b5cff, white: 0xfff4e6 };
 const BPM = 126;
@@ -35,9 +37,9 @@ if (renderer) init();
 
 function init() {
   let heroRatio = Math.min(devicePixelRatio, lowPower ? 1 : 1.25); // bloom softens edges anyway; above 1.25 costs far more than it shows
-  const readingRatio = Math.min(heroRatio, lowPower ? 0.75 : 0.85); // dimmed background behind content: fewer pixels, smoother scrolling
+  let readingRatio = Math.min(heroRatio, lowPower ? 0.75 : 0.85); // dimmed background behind content: fewer pixels, smoother scrolling
   renderer.setPixelRatio(heroRatio);
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(innerWidth, innerHeight, false); // CSS stretches the canvas to the viewport
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
 
@@ -411,14 +413,21 @@ function init() {
   addEventListener("pointermove", e => mouse.set(e.clientX / innerWidth - 0.5, e.clientY / innerHeight - 0.5));
   onScroll();
 
+  let frozen = false;               // phones: hold one dimmed frame while the visitor reads below the hero
+  let fitW = 0, fitH = 0;
   const fit = () => {
-    const aspect = innerWidth / innerHeight;
+    const w = innerWidth, h = innerHeight;
+    // Phones fire resize every time the address bar slides in or out while scrolling. Resizing the
+    // canvas wipes it (blank background while frozen), so let CSS stretch it over that small change.
+    if (lowPower && w === fitW && Math.abs(h - fitH) < 160) return;
+    fitW = w; fitH = h;
+    const aspect = w / h;
     camera.aspect = aspect;
     camera.fov = aspect < 1 ? 50 + (1 - aspect) * 42 : 50;
     camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
-    composer?.setSize(innerWidth, innerHeight);
-    bloom?.resolution.set(innerWidth, innerHeight);
+    renderer.setSize(w, h, false);
+    composer?.setSize(w, h);
+    frozen = false; // repaint the frozen frame at the new size
   };
   addEventListener("resize", fit);
   fit();
@@ -429,13 +438,22 @@ function init() {
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
   const timeScale = reduceMotion ? 0.2 : 1;
   let firstFrame = false;
-  let frozen = false;               // phones: hold one dimmed frame while the visitor reads below the hero
   let slowTime = 0, quality = 0;    // auto quality: step down if frames stay slow
 
+  let skipFlip = false, skipAcc = 0;
   renderer.setAnimationLoop(() => {
-    const rawDt = clock.getDelta();
-    const dt = Math.min(rawDt, 0.05);
+    const frameDt = clock.getDelta();
+    // a photo gallery or viewer covers the stage: draw nothing, give the GPU to the photos
+    if (firstFrame && window.__scenePaused) return;
     const heroFade = Math.min(1, scrollY / innerHeight);
+    // laptops: behind the dimmed reading sections the stage moves slowly, so every other frame is plenty
+    if (!lowPower && firstFrame && heroFade >= 1) {
+      skipFlip = !skipFlip;
+      if (skipFlip) { skipAcc += frameDt; return; }
+    }
+    const rawDt = frameDt + skipAcc;
+    skipAcc = 0;
+    const dt = Math.min(rawDt, 0.05);
     if (lowPower && firstFrame && performance.now() - (window.__lastScroll || 0) < 180) return;
     if (lowPower && firstFrame && heroFade >= 1) {
       if (frozen) return;
@@ -447,11 +465,11 @@ function init() {
     // frames slower than ~45 fps (desktop) / ~33 fps (phones) for a second: lower resolution, then drop the extras
     if (firstFrame && !frozen) {
       const slowFrame = lowPower ? 0.03 : 0.022;
-      slowTime = rawDt > slowFrame && rawDt < 0.5 ? slowTime + rawDt : Math.max(0, slowTime - rawDt);
+      slowTime = frameDt > slowFrame && frameDt < 0.5 ? slowTime + frameDt : Math.max(0, slowTime - frameDt); // per real frame, not the skipped-frame total
       if (slowTime > 1 && quality < 3) {
         slowTime = 0;
         quality++;
-        if (quality <= 2) { heroRatio = Math.max(0.6, heroRatio * 0.8); setRatio(heroRatio); }
+        if (quality <= 2) { heroRatio = Math.max(0.6, heroRatio * 0.8); readingRatio = Math.min(readingRatio, heroRatio); setRatio(heroRatio); }
         else { haze.visible = false; confetti.visible = false; }
       }
     }
