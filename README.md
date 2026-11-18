@@ -45,6 +45,6 @@ Every push to `main` builds the site and publishes it to GitHub Pages through `.
 
 ## Credits
 
-Photos, flyers and videos: United University, Prayagraj. Sachin-Jigar photo: Bollywood Hungama, CC BY 3.0 (via Wikimedia Commons).
+Photos, flyers and videos: United University, Prayagraj.
 
 Built by [REASONATEAI](https://reasonateai.com/).
