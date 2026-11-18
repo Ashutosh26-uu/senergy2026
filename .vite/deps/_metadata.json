@@ -1,0 +1,106 @@
+{
+  "hash": "d9ee48de",
+  "configHash": "30a95b63",
+  "lockfileHash": "8376781d",
+  "browserHash": "2c7eeb08",
+  "optimized": {
+    "three": {
+      "src": "../../node_modules/three/build/three.module.js",
+      "file": "three.js",
+      "fileHash": "725ed93d",
+      "needsInterop": false
+    },
+    "three/addons/postprocessing/EffectComposer.js": {
+      "src": "../../node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+      "file": "three_addons_postprocessing_EffectComposer__js.js",
+      "fileHash": "5a0e8786",
+      "needsInterop": false
+    },
+    "three/addons/postprocessing/RenderPass.js": {
+      "src": "../../node_modules/three/examples/jsm/postprocessing/RenderPass.js",
+      "file": "three_addons_postprocessing_RenderPass__js.js",
+      "fileHash": "a6cb35c0",
+      "needsInterop": false
+    },
+    "three/addons/postprocessing/UnrealBloomPass.js": {
+      "src": "../../node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js",
+      "file": "three_addons_postprocessing_UnrealBloomPass__js.js",
+      "fileHash": "796b301d",
+      "needsInterop": false
+    },
+    "three/addons/postprocessing/OutputPass.js": {
+      "src": "../../node_modules/three/examples/jsm/postprocessing/OutputPass.js",
+      "file": "three_addons_postprocessing_OutputPass__js.js",
+      "fileHash": "7a6ea5da",
+      "needsInterop": false
+    },
+    "three/addons/postprocessing/ShaderPass.js": {
+      "src": "../../node_modules/three/examples/jsm/postprocessing/ShaderPass.js",
+      "file": "three_addons_postprocessing_ShaderPass__js.js",
+      "fileHash": "fd008424",
+      "needsInterop": false
+    },
+    "three/addons/loaders/FontLoader.js": {
+      "src": "../../node_modules/three/examples/jsm/loaders/FontLoader.js",
+      "file": "three_addons_loaders_FontLoader__js.js",
+      "fileHash": "027ea489",
+      "needsInterop": false
+    },
+    "three/addons/geometries/TextGeometry.js": {
+      "src": "../../node_modules/three/examples/jsm/geometries/TextGeometry.js",
+      "file": "three_addons_geometries_TextGeometry__js.js",
+      "fileHash": "577c8d96",
+      "needsInterop": false
+    },
+    "three/addons/environments/RoomEnvironment.js": {
+      "src": "../../node_modules/three/examples/jsm/environments/RoomEnvironment.js",
+      "file": "three_addons_environments_RoomEnvironment__js.js",
+      "fileHash": "3c9036b8",
+      "needsInterop": false
+    },
+    "three/addons/objects/Reflector.js": {
+      "src": "../../node_modules/three/examples/jsm/objects/Reflector.js",
+      "file": "three_addons_objects_Reflector__js.js",
+      "fileHash": "d81d4c03",
+      "needsInterop": false
+    },
+    "three/addons/utils/BufferGeometryUtils.js": {
+      "src": "../../node_modules/three/examples/jsm/utils/BufferGeometryUtils.js",
+      "file": "three_addons_utils_BufferGeometryUtils__js.js",
+      "fileHash": "78d301c2",
+      "needsInterop": false
+    },
+    "react": {
+      "src": "../../node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "ce4a7205",
+      "needsInterop": true
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "37569898",
+      "needsInterop": true
+    }
+  },
+  "chunks": {
+    "chunk-JCH2SJW3": {
+      "file": "chunk-JCH2SJW3.js"
+    },
+    "chunk-YZ7RHIIL": {
+      "file": "chunk-YZ7RHIIL.js"
+    },
+    "chunk-6QDNAWVD": {
+      "file": "chunk-6QDNAWVD.js"
+    },
+    "chunk-3CK76CR2": {
+      "file": "chunk-3CK76CR2.js"
+    },
+    "chunk-Z7OYAWFU": {
+      "file": "chunk-Z7OYAWFU.js"
+    },
+    "chunk-BUSYA2B4": {
+      "file": "chunk-BUSYA2B4.js"
+    }
+  }
+}

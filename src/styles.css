@@ -726,3 +726,11 @@ section[id], .ev26 { scroll-margin-top: 90px; }
 .yg-top { position: sticky; top: 0; z-index: 2; background: #0a0812; }
 .yg-top .yg-head, .yg-top .yg-jump { position: static; top: auto; background: transparent; }
 .yg-top .yg-head { border-bottom: 0; }
+
+/* ---------- about: the faculties that take part ---------- */
+.faculties { list-style: none; margin: 4px 0 20px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.faculties li { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,.05); font-size: .8rem; color: var(--ink); }
+.faculties li:nth-child(3n+1) { border-color: rgba(255,46,136,.45); }
+.faculties li:nth-child(3n+2) { border-color: rgba(41,224,255,.45); }
+.faculties li:nth-child(3n) { border-color: rgba(155,92,255,.5); }
+@media (max-width: 700px) { .faculties { gap: 6px; } .faculties li { font-size: .74rem; padding: 5px 10px; } }

@@ -2,7 +2,7 @@
 // then it settles into a slow idle spin. Rates are per second so it moves the same at 60, 120 or 144 Hz.
 import { useEffect, useRef } from "react";
 import { A, RING } from "../data/site.js";
-import { isScrolling, reduceMotion } from "../three/shared.js";
+import { reduceMotion } from "../three/shared.js";
 
 export default function CampusRing() {
   const stageRef = useRef(), ringRef = useRef();
@@ -20,7 +20,6 @@ export default function CampusRing() {
     const frame = now => {
       const dt = Math.min((now - prev) / 1000, 0.05);
       prev = now;
-      if (!dragging && isScrolling()) { raf = visible ? requestAnimationFrame(frame) : 0; return; } // hold still while the page scrolls
       if (!dragging) {
         const idle = hovering ? HOVER_IDLE : IDLE;
         velocity = idle + (velocity - idle) * Math.exp(-dt * 2.2); // momentum fades into the idle spin

@@ -1,6 +1,6 @@
 // Page chrome and the simpler sections.
 import { useEffect, useRef, useState } from "react";
-import { A, FEST, NAV, SOCIALS } from "../data/site.js";
+import { A, FACULTIES, FEST, NAV, SOCIALS } from "../data/site.js";
 import { reduceMotion } from "../three/shared.js";
 
 /* ---------- loader: never blocks for long, even if the 3D stage is slow ---------- */
@@ -114,7 +114,10 @@ export function About() {
         <div className="glass reveal">
           <p className="kicker">About the fest</p>
           <h2>Where every department of United comes alive.</h2>
-          <p>SYNERGY is the annual fest of <strong>United University</strong>: engineering, law, design, pharmacy, nursing, hotel management, mass communication, agriculture, commerce and more, all on one stage. It's days of competition, culture and creativity across the Jhalwa campus, ending in a Star Night under the lights.</p>
+          <p>SYNERGY is the annual fest of <strong>United University</strong>, bringing all {FACULTIES.length} of its faculties onto one stage. It's days of competition, culture and creativity across the Jhalwa campus, ending in a Star Night under the lights.</p>
+          <ul className="faculties" aria-label="Faculties of United University">
+            {FACULTIES.map(f => <li key={f}>{f}</li>)}
+          </ul>
           <p>From "Pulse of United" in 2024 to "Let the Synergy Ignite" in 2025 and 2026, every edition has ended in a packed open-air concert. SYNERGY 2026 brings <strong>Sachin-Jigar</strong> to the main stage.</p>
           <div className="stats">
             <div><CountUp to={30} /><span>+</span><small>Courses</small></div>

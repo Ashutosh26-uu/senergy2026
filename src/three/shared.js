@@ -11,6 +11,7 @@ export const stage = {
   mouseX: 0, mouseY: 0, // -0.5..0.5
   paused: false,       // a gallery or the viewer covers the stage
   lite: false,         // auto quality dropped the haze and confetti
+  titleHalfW: 7.6,     // half the width of the 3D "SYNERGY" (measured once the font loads)
 };
 
 if (typeof window !== "undefined") {

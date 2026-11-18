@@ -27,6 +27,13 @@ export const MAP = {
   open: "https://www.google.com/maps/search/?api=1&query=United+University+Prayagraj%2C+Jhalwa%2C+Rawatpur%2C+Prayagraj+211012",
 };
 
+// Faculties as named in the Courses menu of uniteduniversity.edu.in (checked 18 Nov 2026)
+export const FACULTIES = [
+  "Engineering & Technology", "Computer Applications", "Law", "Medical Sciences", "Pharmacy", "Nursing",
+  "Agriculture & Allied Sciences", "Commerce & Management", "Mass Communication & Journalism", "Design",
+  "Hospitality", "Arts", "Science",
+];
+
 export const SOCIALS = [
   ["Instagram", "https://www.instagram.com/united_university"], ["Facebook", "https://www.facebook.com/UnitedUniversity.edu/"],
   ["YouTube", "https://www.youtube.com/@uniteduniversityprayagraj4325"], ["LinkedIn", "https://www.linkedin.com/company/united-university-allahabad/"],

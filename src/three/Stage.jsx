@@ -19,15 +19,16 @@ const timeScale = reduceMotion ? 0.2 : 1;
 const beat = t => { const phase = (t * BPM) / 60; return { phase, kick: Math.pow(1 - (phase % 1), 3), bar: Math.floor(phase / 4) }; };
 
 /* ------------------------------------------------------------------ frame director */
-// The canvas renders on demand. This loop decides when a frame is worth drawing:
-// never behind a gallery, not while a phone scrolls, once (frozen) below the hero on phones,
-// and every other frame behind the reading sections on laptops. It also steps quality down when frames run slow.
+// The canvas renders on demand. This loop decides when a frame is worth drawing.
+// The show never stops while the page scrolls; it only pauses behind a gallery or the photo viewer.
+// Behind the reading sections (where the stage is dimmed) it draws every other frame at a lower
+// resolution, and it steps quality down by itself if frames run slow.
 function Director({ onFirstFrame, setBloom }) {
   const { invalidate, setDpr } = useThree();
   useEffect(() => {
     let heroDpr = Math.min(devicePixelRatio, lowPower ? 1 : 1.25);
-    let readDpr = Math.min(heroDpr, lowPower ? 0.75 : 0.85);
-    let dpr = heroDpr, frozen = false, flip = false, slow = 0, quality = 0, last = performance.now(), first = true, raf, bloomOn = !lowPower;
+    let readDpr = Math.min(heroDpr, lowPower ? 0.7 : 0.85);
+    let dpr = heroDpr, flip = false, slow = 0, quality = 0, last = performance.now(), first = true, raf, bloomOn = !lowPower;
     setDpr(dpr);
     const loop = now => {
       raf = requestAnimationFrame(loop);
@@ -35,28 +36,23 @@ function Director({ onFirstFrame, setBloom }) {
       if (first) { first = false; invalidate(); onFirstFrame(); return; }
       if (stage.paused) return;
       const fade = stage.heroFade;
-      if (lowPower && isScrolling()) return;
-      if (lowPower && fade >= 1) { if (frozen) return; frozen = true; } else frozen = false;
       // quality: frames slower than ~45 fps (laptop) / ~33 fps (phone) for a second
-      if (!frozen) {
-        slow = dt > (lowPower ? 0.03 : 0.022) && dt < 0.5 ? slow + dt : Math.max(0, slow - dt);
-        if (slow > 1 && quality < 3) {
-          slow = 0; quality++;
-          if (quality <= 2) { heroDpr = Math.max(0.6, heroDpr * 0.8); readDpr = Math.min(readDpr, heroDpr); }
-          else stage.lite = true;
-        }
+      slow = dt > (lowPower ? 0.03 : 0.022) && dt < 0.5 ? slow + dt : Math.max(0, slow - dt);
+      if (slow > 1 && quality < 3) {
+        slow = 0; quality++;
+        if (quality <= 2) { heroDpr = Math.max(0.6, heroDpr * 0.8); readDpr = Math.min(readDpr, heroDpr); }
+        else stage.lite = true;
       }
       const want = fade > 0.95 ? readDpr : fade < 0.8 ? heroDpr : dpr;
       if (want !== dpr) { dpr = want; setDpr(dpr); }
       const wantBloom = !lowPower && fade < 0.95;
       if (wantBloom !== bloomOn) { bloomOn = wantBloom; setBloom(wantBloom); }
-      if (!lowPower && fade >= 1) { flip = !flip; if (flip) return; }
+      // behind the reading sections: every other frame is plenty and leaves room for smooth scrolling
+      if (fade >= 1 || (lowPower && isScrolling())) { flip = !flip; if (flip) return; }
       invalidate();
     };
     raf = requestAnimationFrame(loop);
-    const onResize = () => { frozen = false; };
-    addEventListener("resize", onResize);
-    return () => { cancelAnimationFrame(raf); removeEventListener("resize", onResize); };
+    return () => cancelAnimationFrame(raf);
   }, [invalidate, setDpr, onFirstFrame, setBloom]);
   return null;
 }
@@ -65,10 +61,12 @@ function Director({ onFirstFrame, setBloom }) {
 const camPath = new THREE.CatmullRomCurve3([[0, 4.2, 27], [-10, 6.5, 16], [9, 9.5, 9], [1.5, 2.3, 9.5], [-6, 3.5, 2.5], [0, 15, 32]].map(p => new THREE.Vector3(...p)));
 const lookPath = new THREE.CatmullRomCurve3([[0, 5.2, -3], [0, 5.2, -3], [-2, 4.5, -1], [0, 7.5, -5], [4, 6, -6], [0, 5, -4]].map(p => new THREE.Vector3(...p)));
 
+const TITLE_AT = new THREE.Vector3(0, 7.1, -3.2); // centre of the 3D title
+
 function CameraRig() {
   const { camera, size, gl } = useThree();
   const s = useRef({ p: stage.scrollP, mx: 0, my: 0 });
-  const pos = useMemo(() => new THREE.Vector3(), []), look = useMemo(() => new THREE.Vector3(), []);
+  const pos = useMemo(() => new THREE.Vector3(), []), look = useMemo(() => new THREE.Vector3(), []), tmp = useMemo(() => new THREE.Vector3(), []);
   useEffect(() => { // wider lens on portrait screens so the stage fits
     const aspect = size.width / size.height;
     camera.fov = aspect < 1 ? 50 + (1 - aspect) * 42 : 50;
@@ -83,8 +81,16 @@ function CameraRig() {
     lookPath.getPoint(v.p, look);
     pos.x += v.mx * 1.6 + Math.sin(t * 0.3) * 0.25;
     pos.y += -v.my * 0.8 + Math.sin(t * 0.47) * 0.12;
+    if (camera.aspect < 1) {
+      // portrait phones: keep aiming at the title, and stay far enough back that all of "SYNERGY" fits the width
+      look.copy(TITLE_AT);
+      const halfW = Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * camera.aspect);
+      const need = (stage.titleHalfW + 1.6) / Math.tan(halfW) + 0.6;
+      tmp.subVectors(pos, TITLE_AT);
+      if (tmp.length() < need) pos.copy(TITLE_AT).addScaledVector(tmp.normalize(), need);
+      look.y -= 4.2 * (1 - stage.heroFade); // in the hero the title sits above the hero text
+    }
     camera.position.copy(pos);
-    if (camera.aspect < 0.8) look.y -= 4.2 * (1 - stage.heroFade); // portrait: title sits above the hero text
     camera.lookAt(look);
     if (!lowPower) gl.toneMappingExposure = 1.05 - stage.heroFade * 0.45; // full show in the hero, dimmer behind content
   });
@@ -383,7 +389,11 @@ function Confetti() {
 /* ------------------------------------------------------------------ 3D title */
 function Title({ envMap, onLoaded }) {
   const group = useRef(), yearMat = useRef(), s = useRef({ mx: 0, my: 0 });
-  useEffect(() => { onLoaded(); }, [onLoaded]); // runs once the font has loaded (Suspense)
+  useEffect(() => { // runs once the font has loaded (Suspense): measure the title so phones can keep it in frame
+    const box = new THREE.Box3().setFromObject(group.current);
+    if (isFinite(box.max.x)) stage.titleHalfW = (box.max.x - box.min.x) / 2;
+    onLoaded();
+  }, [onLoaded]);
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime * timeScale, { kick } = beat(t), v = s.current, k = Math.min(1, Math.min(delta, 0.05) * 2.5);
     v.mx += (stage.mouseX - v.mx) * k; v.my += (stage.mouseY - v.my) * k;
