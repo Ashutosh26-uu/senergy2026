@@ -166,7 +166,6 @@ export function StarNight() {
             <span className="poster-title">SACHIN-JIGAR<br /><small>LIVE AT SYNERGY 2026</small></span>
             <span className="play" aria-hidden="true" />
           </YouTube>
-          <figcaption className="photo-credit">Photo: <a href="https://commons.wikimedia.org/wiki/File:Sachin_-_Jigar.jpg" target="_blank" rel="noopener">Bollywood Hungama</a>, <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a></figcaption>
         </figure>
       </div>
     </section>

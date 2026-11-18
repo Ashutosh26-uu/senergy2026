@@ -370,8 +370,6 @@ h3 { font: 600 1.15rem/1.3 var(--display); margin: 14px 0 8px; }
 .short .logo-poster, .short .poster-title, .short .play { z-index: 1; }
 .short .logo-poster { width: 46%; top: 14px; }
 .short .play { top: 58%; }
-.photo-credit { margin-top: 10px; text-align: center; font-size: .72rem; color: var(--muted); }
-.photo-credit a { color: inherit; }
 
 /* Star Night poster: faces at the top, logo and title at the bottom */
 .short .yt { aspect-ratio: 4/5; max-width: 420px; }
@@ -388,7 +386,7 @@ h3 { font: 600 1.15rem/1.3 var(--display); margin: 14px 0 8px; }
 .edition { background: rgba(14,11,24,.78); }
 .video figcaption, .head .muted { text-shadow: 0 2px 12px rgba(0,0,0,.9); }
 .foot-links a { padding: 8px 0; }
-.credit a, .photo-credit a { display: inline-block; padding: 8px 0; }
+.credit a { display: inline-block; padding: 8px 0; }
 
 @media (max-width: 900px) {
   .links { background: rgba(10,8,18,.98); }
