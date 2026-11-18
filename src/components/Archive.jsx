@@ -6,7 +6,10 @@ import { reduceMotion } from "../three/shared.js";
 import { Modal, useViewer } from "./ui.jsx";
 import { YouTube } from "./sections.jsx";
 
+const YEARS = ["2025", "2024"];
 const shotItem = (year, slug, title, sub) => ({ src: A(`glimpses/${year}/${slug}.jpg`), alt: `${title}${sub ? ` (${sub})` : ""}, SYNERGY ${year}`, caption: sub ? `${title} · ${sub}` : title });
+const countPhotos = y => GALLERY[y].days.reduce((n, [, list]) => n + list.length, 0);
+const chipLabel = label => label.replace(/: [^·]+ ·/, " ·"); // "Star Night: X LIVE · 17 Nov" → "Star Night · 17 Nov"
 
 /** One photo at its natural shape, with a caption under it. */
 function Shot({ year, slug, title, sub, onOpen }) {
@@ -19,19 +22,42 @@ function Shot({ year, slug, title, sub, onOpen }) {
   );
 }
 
-const countPhotos = y => GALLERY[y].days.reduce((n, [, list]) => n + list.length, 0);
+/**
+ * Which year's gallery is open, kept in the URL (#synergy2025) so a gallery can be shared,
+ * and so the phone's Back button closes it instead of leaving the site.
+ */
+function useYearInUrl() {
+  const [year, setYear] = useState(null);
+  const switching = useRef(false);
+  useEffect(() => {
+    const fromUrl = () => { const m = location.hash.match(/^#synergy(2024|2025)$/); setYear(m ? m[1] : null); };
+    const m = location.hash.match(/^#synergy(2024|2025)$/);
+    if (m) { document.getElementById("archive")?.scrollIntoView(); setYear(m[1]); }
+    addEventListener("popstate", fromUrl);
+    return () => removeEventListener("popstate", fromUrl);
+  }, []);
+  const open = useCallback(y => {
+    if (location.hash !== `#synergy${y}`) history.pushState({ gallery: y }, "", `#synergy${y}`);
+    setYear(y);
+  }, []);
+  const switchTo = useCallback(y => { // from one gallery straight to the other
+    switching.current = true;
+    history.replaceState({ gallery: y }, "", `#synergy${y}`);
+    setYear(y);
+  }, []);
+  const onClosed = useCallback(() => {
+    if (switching.current) { switching.current = false; return; }
+    if (history.state?.gallery) history.back();           // we added the entry: step back over it
+    else if (/^#synergy20\d\d$/.test(location.hash)) history.replaceState(null, "", location.pathname + location.search); // arrived by link
+    setYear(null);
+  }, []);
+  return { year, open, switchTo, onClosed };
+}
 
 export default function Archive() {
-  const [year, setYear] = useState(null);
+  const { year, open, switchTo, onClosed } = useYearInUrl();
   const openViewer = useViewer();
-  // old links (#synergy2025, #synergy2024) still land on the right photos
-  useEffect(() => {
-    const go = () => { const m = location.hash.match(/^#synergy(2024|2025)$/); if (m) { document.getElementById("archive")?.scrollIntoView(); setYear(m[1]); } };
-    go(); addEventListener("hashchange", go);
-    return () => removeEventListener("hashchange", go);
-  }, []);
   const preview = PREVIEW.map(([y, s, t, sub]) => shotItem(y, s, t, sub));
-  const close = useCallback(() => setYear(null), []);
   return (
     <section className="section" id="archive">
       <div className="wrap">
@@ -45,8 +71,8 @@ export default function Archive() {
         </div>
 
         <div className="years reveal">
-          {["2025", "2024"].map(y => (
-            <button key={y} className="year-card" onClick={() => setYear(y)}>
+          {YEARS.map(y => (
+            <button key={y} className="year-card" onClick={() => open(y)}>
               <img className={GALLERY[y].darkLogo ? "dark" : undefined} src={A(`img/${GALLERY[y].logo}`)} alt="" loading="lazy" decoding="async" />
               <span className="yc-text"><b>{GALLERY[y].title}</b><small>{GALLERY[y].dates.replace("November", "Nov")}</small>
                 <small>{countPhotos(y)} photos · {y === "2025" ? "9 events with flyers" : "14 events"}</small></span>
@@ -61,35 +87,37 @@ export default function Archive() {
               <img src={A("img/yt-synergy-2025-sm.jpg")} srcSet={`${A("img/yt-synergy-2025-sm.jpg")} 720w, ${A("img/yt-synergy-2025.jpg")} 1280w`} sizes="(max-width: 900px) 100vw, 560px" decoding="async" alt="SYNERGY 2025: Ankit Tiwari live in concert, 29th November" loading="lazy" />
               <span className="play" aria-hidden="true" />
             </YouTube>
-            <figcaption>Relive SYNERGY 2025: the official recap</figcaption>
           </figure>
           <div className="editions">
-            {EDITIONS.map(e => (
-              <article key={e.year} className={`edition reveal${e.now ? " now" : ""}`}>
+            {EDITIONS.map(e => {
+              const inner = <>
                 <img decoding="async" className={e.dark ? "dark-badge" : undefined} src={A(`img/${e.logo}`)} alt={`SYNERGY ${e.year}`} loading="lazy" />
-                <div><b>{e.year}</b><small>{e.sub}</small></div>
-              </article>
-            ))}
+                <div><b>{e.year}</b><small>{e.sub}</small><span className="ed-go">{e.now ? "See the events →" : `Open ${countPhotos(e.year)} photos →`}</span></div>
+              </>;
+              return e.now
+                ? <a key={e.year} href="#events" className="edition now reveal" aria-label="SYNERGY 2026: see the events">{inner}</a>
+                : <button key={e.year} type="button" className="edition reveal" onClick={() => open(e.year)} aria-label={`Open SYNERGY ${e.year} photos`}>{inner}</button>;
+            })}
           </div>
         </div>
       </div>
 
-      {["2025", "2024"].map(y => (
-        <Modal key={y} open={year === y} onClose={close} className="year-gallery" label={`${GALLERY[y].title} photos`} onOpened={d => { d.scrollTop = 0; }}>
-          <YearGallery year={y} />
+      {YEARS.map(y => (
+        <Modal key={y} open={year === y} onClose={onClosed} className="year-gallery" label={`${GALLERY[y].title} photos`} onOpened={d => { d.scrollTop = 0; }}>
+          <YearGallery year={y} onSwitch={switchTo} />
         </Modal>
       ))}
     </section>
   );
 }
 
-function YearGallery({ year }) {
+function YearGallery({ year, onSwitch }) {
   const g = GALLERY[year];
+  const other = YEARS.find(y => y !== year);
   const openViewer = useViewer();
   const body = useRef();
-  const all = g.days.flatMap(([, list]) => list.map(s => ({ ...s, item: shotItem(year, s.slug, s.title, s.sub) })));
-  const items = all.map(s => s.item);
-  const sections = [...(year === "2025" ? [["events", "The events"]] : []), ...g.days.map(([label], i) => [`d${i}`, label])];
+  const items = g.days.flatMap(([, list]) => list.map(s => shotItem(year, s.slug, s.title, s.sub)));
+  const sections = [...(year === "2025" ? [["events", "The events"]] : []), ...g.days.map(([label], i) => [`d${i}`, chipLabel(label)])];
   const [on, setOn] = useState(sections[0][0]);
   // highlight the chip of the day on screen; at the bottom, the last day
   useEffect(() => {
@@ -109,15 +137,18 @@ function YearGallery({ year }) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   let n = 0;
   return <>
+    <div className="yg-top">
     <header className="yg-head">
       <img className={g.darkLogo ? "dark" : undefined} src={A(`img/${g.logo}`)} alt="" decoding="async" />
       <div><b>{g.title}</b><small>{g.dates}</small></div>
+      <button type="button" className="yg-other" onClick={() => onSwitch(other)}>{other} →</button>
       <button className="yg-close" aria-label={`Close ${g.title} photos`} onClick={e => e.currentTarget.closest("dialog").close()}>×</button>
     </header>
     <nav className="yg-jump" aria-label="Jump to">
       {sections.map(([id, label]) => <button key={id} type="button" className={on === id ? "on" : undefined}
         onClick={() => document.getElementById(`yg-${year}-${id}`)?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" })}>{label}</button>)}
     </nav>
+    </div>
     <div className="yg-body" ref={body}>
       {year === "2025" && <Events2025 />}
       {g.days.map(([label, list], i) => (
@@ -128,6 +159,11 @@ function YearGallery({ year }) {
           </div>
         </div>
       ))}
+      <button type="button" className="yg-next" onClick={() => onSwitch(other)}>
+        <img className={GALLERY[other].darkLogo ? "dark" : undefined} src={A(`img/${GALLERY[other].logo}`)} alt="" loading="lazy" decoding="async" />
+        <span><small>That's all from {year}. Next:</small><b>{GALLERY[other].title}</b><small>{GALLERY[other].dates} · {countPhotos(other)} photos</small></span>
+        <span className="yc-go" aria-hidden="true">Open →</span>
+      </button>
     </div>
   </>;
 }

@@ -47,8 +47,20 @@ export const useViewer = () => useContext(ViewerCtx);
 
 export function ViewerProvider({ children }) {
   const [state, setState] = useState(null); // { items: [{src, alt, caption}], index }
-  const open = useCallback((items, index = 0) => setState({ items, index }), []);
-  const close = useCallback(() => setState(null), []);
+  // a history entry per open viewer: the phone's Back button closes the photo, not the site
+  const open = useCallback((items, index = 0) => {
+    if (!history.state?.viewer) history.pushState({ ...(history.state || {}), viewer: true }, "");
+    setState({ items, index });
+  }, []);
+  const close = useCallback(() => {
+    if (history.state?.viewer) history.back();
+    setState(null);
+  }, []);
+  useEffect(() => {
+    const onPop = () => { if (!history.state?.viewer) setState(null); };
+    addEventListener("popstate", onPop);
+    return () => removeEventListener("popstate", onPop);
+  }, []);
   return <ViewerCtx.Provider value={open}>
     {children}
     <Modal open={!!state} onClose={close} className={`lightbox${state && state.items.length < 2 ? " single" : ""}`} label="Full-size image">
