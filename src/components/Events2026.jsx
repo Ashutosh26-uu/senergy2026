@@ -6,13 +6,16 @@ import { reduceMotion } from "../three/shared.js";
 import { useToast, useViewer } from "./ui.jsx";
 
 const IST = "+05:30";
-const at = s => new Date(s.length > 10 ? `${s}:00${IST}` : `${s}T23:59:59${IST}`).getTime();
 const DAY = 864e5;
+const at = s => new Date(s.length > 10 ? `${s}:00${IST}` : `${s}T23:59:59${IST}`).getTime();
 const EVENTS = EVENTS_2026.map(e => ({
   ...e,
   id: `ev-${e.slug}`,
   regAt: e.reg ? at(e.reg) : null,
-  times: e.sessions.map(([s, end, label]) => ({ start: at(s), end: at(end), label })),
+  // a date with no time (end null) covers that whole day in IST and shows as "Time TBA"
+  times: e.sessions.map(([s, end, label]) => end
+    ? { start: at(s), end: at(end), label }
+    : { start: new Date(`${s}T00:00:00${IST}`).getTime(), end: new Date(`${s}T00:00:00${IST}`).getTime() + DAY, label, allDay: true }),
   text: `${e.title} ${e.tag} ${e.venue} ${e.desc}`.toLowerCase(),
 }));
 const TABS = [["all", "All", `${EVENTS.length} events`], ["5", "5 Dec", "Day 1"], ["6", "6 Dec", "Day 2 + Star Night"], ["online", "Online", "Click & Roll"], ["picks", "♥ My picks", null]];
@@ -26,7 +29,7 @@ const shortDate = t => new Date(t).toLocaleDateString("en-IN", { day: "numeric",
 /** registration badge before the fest, live / done during it */
 function statusOf(e, now) {
   const s = e.times;
-  if (s.some(x => now >= x.start && now < x.end)) return ["live", "Live now"];
+  if (s.some(x => !x.allDay && now >= x.start && now < x.end)) return ["live", "Live now"];
   if (s.length && now >= s[s.length - 1].end) return ["done", "Done"];
   if (e.regAt) {
     if (now > e.regAt) return ["closed", "Registration closed"];
@@ -58,7 +61,9 @@ function downloadIcs(e) {
   const d = t => new Date(t).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const esc = s => s.replace(/[\\,;]/g, m => "\\" + m);
   const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//SYNERGY 2026//United University//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
-  e.times.forEach((s, i) => lines.push("BEGIN:VEVENT", `UID:${e.slug}-${i}@synergy2026`, `DTSTAMP:${d(Date.now())}`, `DTSTART:${d(s.start)}`, `DTEND:${d(s.end)}`,
+  const day = t => new Date(t).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }).replace(/-/g, "");
+  e.times.forEach((s, i) => lines.push("BEGIN:VEVENT", `UID:${e.slug}-${i}@synergy2026`, `DTSTAMP:${d(Date.now())}`,
+    ...(s.allDay ? [`DTSTART;VALUE=DATE:${day(s.start)}`, `DTEND;VALUE=DATE:${day(s.end)}`] : [`DTSTART:${d(s.start)}`, `DTEND:${d(s.end)}`]),
     `SUMMARY:${esc(`${e.title}${s.label ? " – " + s.label : ""} · SYNERGY 2026`)}`,
     `LOCATION:${esc(`${e.venue}, United University, Rawatpur, Jhalwa, Prayagraj`)}`,
     `DESCRIPTION:${esc(`SYNERGY 2026 at United University. Details and registration: ${url}`)}`,
@@ -203,8 +208,9 @@ function Schedule({ shown, day, now, onGo }) {
   const rows = [];
   shown.forEach(e => e.times.forEach(s => rows.push({ e, ...s })));
   if (day === "all" || day === "6") rows.push({ star: true, start: at(STAR_NIGHT.start), end: at(STAR_NIGHT.end) });
-  rows.sort((a, b) => a.start - b.start);
-  const nextUp = rows.find(r => r.start > now);
+  const sortKey = r => r.allDay ? r.end - 1 : r.start; // "Time TBA" rows go last in their day
+  rows.sort((a, b) => sortKey(a) - sortKey(b));
+  const nextUp = rows.find(r => !r.allDay && r.start > now);
   const groups = new Map();
   rows.forEach(r => { const k = r.e?.day === "online" ? "online" : dayKey(r.start); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); });
   const tbas = shown.filter(e => !e.times.length);
@@ -216,12 +222,12 @@ function Schedule({ shown, day, now, onGo }) {
           <h3 className="sch-day">{k === "online" ? `Online · ${dayName(list[0].end)}` : dayName(list[0].start)}</h3>
           <ol className="sch-list">
             {list.map((r, i) => {
-              const state = now >= r.start && now < r.end ? "live" : now >= r.end ? "done" : r === nextUp ? "next" : "";
+              const state = now >= r.end ? "done" : r.allDay ? "" : now >= r.start ? "live" : r === nextUp ? "next" : "";
               const pill = { live: "Live now", done: "Done", next: "Up next" }[state];
               return (
                 <li key={i} className={[state && `is-${state}`, r.star && "is-star"].filter(Boolean).join(" ") || undefined}>
                   <button type="button" onClick={() => onGo(r.star ? "starnight" : r.e.id)}>
-                    <span className="sch-time">{r.star ? "Evening" : r.e.day === "online" ? `By ${fmtTime(r.end)}` : fmtTime(r.start)}</span>
+                    <span className="sch-time">{r.star ? "Evening" : r.allDay ? "Time TBA" : r.e.day === "online" ? `By ${fmtTime(r.end)}` : fmtTime(r.start)}</span>
                     <span className="sch-what"><b>{r.star ? STAR_NIGHT.title : r.e.title + (r.label ? ` · ${r.label}` : "")}</b><small>{r.star ? STAR_NIGHT.venue : r.e.venue}</small></span>
                     {pill && <span className="sch-pill">{pill}</span>}
                   </button>
