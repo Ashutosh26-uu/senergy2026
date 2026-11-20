@@ -34,7 +34,7 @@ export const GALLERY = {
 };
 
 // natural sizes of the -sm files that are not 700×467
-export const SIZES = { "2024/photo-booth": [467, 700], "2025/tattoo": [700, 393] };
+export const SIZES = { "2024/photo-booth": [533, 700], "2025/tattoo": [700, 393] };
 export const shotSize = (year, slug) => SIZES[`${year}/${slug}`] || [700, 467];
 
 export const PREVIEW = [

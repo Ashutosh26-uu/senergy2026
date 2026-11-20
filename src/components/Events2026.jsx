@@ -1,6 +1,6 @@
 // SYNERGY 2026 events: filters, search, My picks, live deadlines, schedule, calendar and share.
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { EVENTS_2026, FLYER_CARD_SIZE, STAR_NIGHT } from "../data/events2026.js";
+import { EVENTS_2026, EVENING, FLYER_CARD_SIZE } from "../data/events2026.js";
 import { A } from "../data/site.js";
 import { reduceMotion } from "../three/shared.js";
 import { useToast, useViewer } from "./ui.jsx";
@@ -13,9 +13,9 @@ const EVENTS = EVENTS_2026.map(e => ({
   id: `ev-${e.slug}`,
   regAt: e.reg ? at(e.reg) : null,
   // a date with no time (end null) covers that whole day in IST and shows as "Time TBA"
-  times: e.sessions.map(([s, end, label]) => end
-    ? { start: at(s), end: at(end), label }
-    : { start: new Date(`${s}T00:00:00${IST}`).getTime(), end: new Date(`${s}T00:00:00${IST}`).getTime() + DAY, label, allDay: true }),
+  times: e.sessions.map(([s, end, label, venue]) => end
+    ? { start: at(s), end: at(end), label, venue }
+    : { start: new Date(`${s}T00:00:00${IST}`).getTime(), end: new Date(`${s}T00:00:00${IST}`).getTime() + DAY, label, venue, allDay: true }),
   text: `${e.title} ${e.tag} ${e.venue} ${e.desc}`.toLowerCase(),
 }));
 const TABS = [["all", "All", `${EVENTS.length} events`], ["5", "5 Dec", "Day 1"], ["6", "6 Dec", "Day 2 + Star Night"], ["online", "Online", "Click & Roll"], ["picks", "♥ My picks", null]];
@@ -31,6 +31,7 @@ function statusOf(e, now) {
   const s = e.times;
   if (s.some(x => !x.allDay && now >= x.start && now < x.end)) return ["live", "Live now"];
   if (s.length && now >= s[s.length - 1].end) return ["done", "Done"];
+  if (e.register && !e.regAt) return ["open", "Registration open · tap Register now"];
   if (e.regAt) {
     if (now > e.regAt) return ["closed", "Registration closed"];
     const left = e.regAt - now;
@@ -65,7 +66,7 @@ function downloadIcs(e) {
   e.times.forEach((s, i) => lines.push("BEGIN:VEVENT", `UID:${e.slug}-${i}@synergy2026`, `DTSTAMP:${d(Date.now())}`,
     ...(s.allDay ? [`DTSTART;VALUE=DATE:${day(s.start)}`, `DTEND;VALUE=DATE:${day(s.end)}`] : [`DTSTART:${d(s.start)}`, `DTEND:${d(s.end)}`]),
     `SUMMARY:${esc(`${e.title}${s.label ? " – " + s.label : ""} · SYNERGY 2026`)}`,
-    `LOCATION:${esc(`${e.venue}, United University, Rawatpur, Jhalwa, Prayagraj`)}`,
+    `LOCATION:${esc(`${s.venue || e.venue}, United University, Rawatpur, Jhalwa, Prayagraj`)}`,
     `DESCRIPTION:${esc(`SYNERGY 2026 at United University. Details and registration: ${url}`)}`,
     "BEGIN:VALARM", "TRIGGER:-PT1H", "ACTION:DISPLAY", `DESCRIPTION:${esc(e.title)} starts in 1 hour`, "END:VALARM", "END:VEVENT"));
   lines.push("END:VCALENDAR");
@@ -188,6 +189,7 @@ export default function Events2026() {
                       {e.regAt && <div><dt>Register</dt><dd>By {shortDate(e.regAt)} 2026</dd></div>}
                     </dl>
                     <div className="ev-actions">
+                      {e.register && <a className="ev-act ev-register" href={e.register} target="_blank" rel="noopener"><span aria-hidden="true">✍</span> Register now</a>}
                       {e.times.length > 0 && <button type="button" className="ev-act" onClick={() => { downloadIcs(e); toast(`Calendar file for ${e.title} downloaded`); }}><span aria-hidden="true">📅</span> Add to calendar</button>}
                       <button type="button" className="ev-act" onClick={() => share(e)}><span aria-hidden="true">↗</span> Share</button>
                     </div>
@@ -207,12 +209,13 @@ export default function Events2026() {
 function Schedule({ shown, day, now, onGo }) {
   const rows = [];
   shown.forEach(e => e.times.forEach(s => rows.push({ e, ...s })));
-  if (day === "all" || day === "6") rows.push({ star: true, start: at(STAR_NIGHT.start), end: at(STAR_NIGHT.end) });
+  if (day === "all" || day === "6") EVENING.forEach(x => rows.push({ extra: x, star: x.star, start: at(x.start), end: at(x.end) }));
   const sortKey = r => r.allDay ? r.end - 1 : r.start; // "Time TBA" rows go last in their day
   rows.sort((a, b) => sortKey(a) - sortKey(b));
   const nextUp = rows.find(r => !r.allDay && r.start > now);
   const groups = new Map();
-  rows.forEach(r => { const k = r.e?.day === "online" ? "online" : dayKey(r.start); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); });
+  const isOnline = r => r.e && (r.venue || r.e.venue) === "Online";
+  rows.forEach(r => { const k = isOnline(r) ? "online" : dayKey(r.start); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); });
   const tbas = shown.filter(e => !e.times.length);
   if (!rows.length && !tbas.length) return <p className="ev-empty">Nothing to show for this filter.</p>;
   return (
@@ -226,9 +229,9 @@ function Schedule({ shown, day, now, onGo }) {
               const pill = { live: "Live now", done: "Done", next: "Up next" }[state];
               return (
                 <li key={i} className={[state && `is-${state}`, r.star && "is-star"].filter(Boolean).join(" ") || undefined}>
-                  <button type="button" onClick={() => onGo(r.star ? "starnight" : r.e.id)}>
-                    <span className="sch-time">{r.star ? "Evening" : r.allDay ? "Time TBA" : r.e.day === "online" ? `By ${fmtTime(r.end)}` : fmtTime(r.start)}</span>
-                    <span className="sch-what"><b>{r.star ? STAR_NIGHT.title : r.e.title + (r.label ? ` · ${r.label}` : "")}</b><small>{r.star ? STAR_NIGHT.venue : r.e.venue}</small></span>
+                  <button type="button" onClick={() => onGo(r.extra ? "starnight" : r.e.id)}>
+                    <span className="sch-time">{r.allDay ? "Time TBA" : isOnline(r) ? `By ${fmtTime(r.end)}` : fmtTime(r.start)}</span>
+                    <span className="sch-what"><b>{r.extra ? r.extra.title : r.e.title + (r.label ? ` · ${r.label}` : "")}</b><small>{r.extra ? r.extra.venue : r.venue || r.e.venue}</small></span>
                     {pill && <span className="sch-pill">{pill}</span>}
                   </button>
                 </li>

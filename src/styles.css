@@ -734,3 +734,7 @@ section[id], .ev26 { scroll-margin-top: 90px; }
 .faculties li:nth-child(3n+2) { border-color: rgba(41,224,255,.45); }
 .faculties li:nth-child(3n) { border-color: rgba(155,92,255,.5); }
 @media (max-width: 700px) { .faculties { gap: 6px; } .faculties li { font-size: .74rem; padding: 5px 10px; } }
+
+/* events with an online sign-up link instead of a QR code */
+.ev-act.ev-register { flex-basis: 100%; text-align: center; text-decoration: none; color: #fff; background: var(--grad); border-color: transparent; }
+.ev-act.ev-register:hover, .ev-act.ev-register:focus-visible { filter: brightness(1.1); border-color: transparent; }
