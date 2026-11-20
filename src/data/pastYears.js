@@ -23,7 +23,7 @@ export const GALLERY = {
     ],
   },
   2024: {
-    title: "SYNERGY 2024", dates: "16–17 November 2024 · Sreerama Chandra LIVE", logo: "synergy-2024-logo.png", darkLogo: true,
+    title: "SYNERGY 2024", dates: "16–17 November 2024 · Sreerama Chandra LIVE", logo: "synergy-2024.svg",
     days: [
       ["Pre-fest · 15 Nov", g([["photo-booth", "Fest décor", "Photo booth"], ["decor-train", "Department décor", "Décor round"]])],
       ["Day 1 · 16 Nov", g([["opening", "Opening ceremony"], ["lamp-lighting", "Lamp lighting"], ["audience", "A packed hall"], ["rhythm-rumble", "Rhythm Rumble", "Dance"], ["rhythm-rumble-2", "Rhythm Rumble", "Dance"], ["masterchef", "Master Chef", "Food"], ["masterchef-judging", "Master Chef", "Judging"], ["spell-bee", "Spell Bee Championship", "Winners"], ["spell-bee-2", "Spell Bee Championship", "Winners"], ["shutter-story", "Shutter Story", "Photography"], ["shutter-story-2", "Shutter Story", "Winners"]])],
@@ -45,7 +45,7 @@ export const PREVIEW = [
 ];
 
 export const EDITIONS = [
-  { year: "2024", logo: "synergy-2024-logo.png", dark: true, sub: "16–17 Nov · Sreerama Chandra LIVE", theme: "Pulse of United" },
+  { year: "2024", logo: "synergy-2024.svg", sub: "16–17 Nov · Sreerama Chandra LIVE", theme: "Pulse of United" },
   { year: "2025", logo: "synergy-2025.svg", sub: "28–29 Nov · Ankit Tiwari LIVE", theme: "Let the Synergy Ignite" },
   { year: "2026", logo: "synergy-2026.svg", sub: "5–6 Dec · Sachin-Jigar LIVE", theme: "Coming up", now: true },
 ];

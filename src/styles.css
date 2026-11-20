@@ -184,7 +184,6 @@ h3 { font: 600 1.15rem/1.3 var(--display); margin: 14px 0 8px; }
 .editions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 56px; }
 .edition { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: var(--radius); border: 1px solid var(--line); background: rgba(255,255,255,.04); }
 .edition img { height: 110px; width: 100%; object-fit: contain; background: #fff; border-radius: 14px; padding: 10px; }
-.edition img.dark-badge { background: #07060b; }
 .edition b { font: 800 1.4rem var(--display); }
 .edition small { display: block; color: var(--muted); }
 .edition.now { border-color: rgba(255,46,136,.6); box-shadow: 0 0 50px -12px rgba(255,46,136,.6); }
@@ -534,7 +533,6 @@ h3 { font: 600 1.15rem/1.3 var(--display); margin: 14px 0 8px; }
 .year-card { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "logo text" "go go"; align-items: center; gap: 14px 18px; padding: 18px; border-radius: var(--radius); border: 1px solid var(--line); background: rgba(14,11,24,.8); color: var(--ink); text-align: left; cursor: pointer; transition: transform .3s, border-color .3s, box-shadow .3s; }
 .year-card:hover, .year-card:focus-visible { transform: translateY(-4px); border-color: rgba(255,46,136,.6); box-shadow: 0 24px 60px -24px rgba(255,46,136,.6); outline: none; }
 .year-card img { grid-area: logo; width: 128px; height: auto; border-radius: 12px; background: #fff; }
-.year-card img.dark { background: #020a16; }
 .yc-text { grid-area: text; display: flex; flex-direction: column; gap: 4px; }
 .yc-text b { font: 800 clamp(1.1rem, 2vw, 1.45rem) var(--display); }
 .yc-text small { color: var(--muted); font-size: .82rem; }
@@ -546,7 +544,6 @@ h3 { font: 600 1.15rem/1.3 var(--display); margin: 14px 0 8px; }
 html:has(.year-gallery[open]) { overflow: hidden; }
 .yg-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 14px; padding: 12px max(16px, calc((100% - 1180px) / 2)); background: rgba(10,8,18,.92); border-bottom: 1px solid var(--line); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .yg-head img { width: 92px; height: auto; border-radius: 10px; background: #fff; }
-.yg-head img.dark { background: #020a16; }
 .yg-head div { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .yg-head b { font: 800 1.15rem var(--display); }
 .yg-head small { color: var(--muted); font-size: .8rem; }
@@ -710,7 +707,6 @@ section[id], .ev26 { scroll-margin-top: 90px; }
 .yg-next { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; width: 100%; margin: 40px 0 0; padding: 18px; border-radius: var(--radius); border: 1px solid var(--line); background: rgba(14,11,24,.85); color: var(--ink); text-align: left; cursor: pointer; transition: transform .25s, border-color .25s; }
 .yg-next:hover, .yg-next:focus-visible { transform: translateY(-3px); border-color: rgba(255,46,136,.6); outline: none; }
 .yg-next img { width: 120px; height: auto; border-radius: 12px; background: #fff; }
-.yg-next img.dark { background: #020a16; }
 .yg-next span:not(.yc-go) { display: flex; flex-direction: column; gap: 3px; }
 .yg-next b { font: 800 1.3rem var(--display); }
 .yg-next small { color: var(--muted); font-size: .82rem; }
