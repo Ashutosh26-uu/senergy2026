@@ -1,5 +1,5 @@
 // SYNERGY 2026 events: filters, search, My picks, live deadlines, schedule, calendar and share.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EVENTS_2026, EVENING, FLYER_CARD_SIZE } from "../data/events2026.js";
 import { A } from "../data/site.js";
 import { reduceMotion } from "../three/shared.js";
@@ -75,6 +75,51 @@ function downloadIcs(e) {
   a.download = `synergy-2026-${e.slug}.ics`;
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+// Google Calendar opens with the event already filled in: one tap on Save adds it.
+const googleUrl = (e, s) => {
+  const z = t => new Date(t).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const d = t => new Date(t).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }).replace(/-/g, "");
+  const p = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `${e.title}${s.label ? " – " + s.label : ""} · SYNERGY 2026`,
+    dates: s.allDay ? `${d(s.start)}/${d(s.end)}` : `${z(s.start)}/${z(s.end)}`,
+    location: `${s.venue || e.venue}, United University, Rawatpur, Jhalwa, Prayagraj`,
+    details: `SYNERGY 2026 at United University. Details and registration: ${location.origin}${location.pathname}#${e.id}`,
+    ctz: "Asia/Kolkata",
+  });
+  return `https://calendar.google.com/calendar/render?${p}`;
+};
+const isApple = typeof navigator !== "undefined" && /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+
+/** "Add to calendar": Google Calendar (pre-filled) or the phone's own calendar app (Apple, Outlook, Samsung…). */
+function CalendarMenu({ e, onIcs }) {
+  const [open, setOpen] = useState(false);
+  const box = useRef();
+  useEffect(() => {
+    if (!open) return;
+    const away = ev => { if (!box.current?.contains(ev.target)) setOpen(false); };
+    const esc = ev => { if (ev.key === "Escape") setOpen(false); };
+    document.addEventListener("pointerdown", away); addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", away); removeEventListener("keydown", esc); };
+  }, [open]);
+  const google = e.times.map(s => (
+    <a key={s.start} className="cal-opt" href={googleUrl(e, s)} target="_blank" rel="noopener" onClick={() => setOpen(false)}>
+      <span className="cal-ic cal-g" aria-hidden="true">G</span>
+      <span>Google Calendar{e.times.length > 1 && <small>{s.label || shortDate(s.start)}</small>}</span>
+    </a>));
+  const device = (
+    <button key="ics" type="button" className="cal-opt" onClick={() => { setOpen(false); onIcs(); }}>
+      <span className="cal-ic" aria-hidden="true"></span>
+      <span>{isApple ? "Apple Calendar" : "Phone calendar / Outlook"}<small>{e.times.length > 1 ? `All ${e.times.length} rounds, with a 1-hour reminder` : "With a 1-hour reminder"}</small></span>
+    </button>);
+  return (
+    <div className="cal" ref={box}>
+      <button type="button" className="ev-act" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen(o => !o)}><span aria-hidden="true">📅</span> Add to calendar</button>
+      {open && <div className="cal-menu" role="menu">{isApple ? [device, ...google] : [...google, device]}</div>}
+    </div>
+  );
 }
 
 const flash = id => {
@@ -190,7 +235,7 @@ export default function Events2026() {
                     </dl>
                     <div className="ev-actions">
                       {e.register && <a className="ev-act ev-register" href={e.register} target="_blank" rel="noopener"><span aria-hidden="true">✍</span> Register now</a>}
-                      {e.times.length > 0 && <button type="button" className="ev-act" onClick={() => { downloadIcs(e); toast(`Calendar file for ${e.title} downloaded`); }}><span aria-hidden="true">📅</span> Add to calendar</button>}
+                      {e.times.length > 0 && <CalendarMenu e={e} onIcs={() => { downloadIcs(e); toast(`Opening ${e.title} in your calendar app`); }} />}
                       <button type="button" className="ev-act" onClick={() => share(e)}><span aria-hidden="true">↗</span> Share</button>
                     </div>
                   </div>
