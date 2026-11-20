@@ -15,7 +15,7 @@ export const EVENTS_2025 = [
 const g = items => items.map(([slug, title, sub = ""]) => ({ slug, title, sub }));
 export const GALLERY = {
   2025: {
-    title: "SYNERGY 2025", dates: "28–29 November 2025 · Ankit Tiwari LIVE", logo: "synergy-2025-card.png",
+    title: "SYNERGY 2025", dates: "28–29 November 2025 · Ankit Tiwari LIVE", logo: "synergy-2025.svg",
     days: [
       ["Day 1 · 28 Nov", g([["opening", "Fest declared open"], ["opening-2", "Opening address"], ["campus-letters", "Opening day"], ["war-of-bands", "War of Bands", "Music"], ["war-of-bands-2", "War of Bands", "Music"], ["rangavalli", "Rangavalli", "Rangoli"], ["rangavalli-2", "Rangavalli", "Rangoli"], ["tshirt-painting", "T-Shirt Painting"], ["tshirt-painting-2", "T-Shirt Painting"], ["face-painting", "Face painting"], ["face-painting-2", "Face painting"], ["masterchef", "Master Chef", "Food"], ["photo-booth", "Fest décor", "Photo booth"], ["fun-fair", "Stalls & fun fair"]])],
       ["Day 2 · 29 Nov", g([["brain-booster", "Brain Booster", "Quiz winners"], ["brain-booster-2", "Brain Booster", "Quiz winners"], ["jam", "JAM: Just A Minute", "Moot Court"], ["tattoo", "Tattoo Competition"], ["junkyard", "Junkyard", "Best out of waste"], ["junkyard-2", "Junkyard", "Best out of waste"], ["poster-making", "Poster making"], ["tarangam", "Tarangam", "Singing"], ["tarangam-2", "Tarangam", "Singing"], ["rhythm-rumble", "Rhythm Rumble Reloaded", "Dance"], ["rhythm-rumble-2", "Rhythm Rumble Reloaded", "Dance"], ["crowd", "A full house"], ["directors-cut", "Director's Cut", "Fashion show"], ["fashion", "Director's Cut", "Fashion show"], ["fashion-2", "Director's Cut", "Fashion show"], ["fashion-lineup", "Director's Cut", "Fashion show"]])],
@@ -46,6 +46,6 @@ export const PREVIEW = [
 
 export const EDITIONS = [
   { year: "2024", logo: "synergy-2024-logo.png", dark: true, sub: "16–17 Nov · Sreerama Chandra LIVE", theme: "Pulse of United" },
-  { year: "2025", logo: "synergy-2025-card.png", sub: "28–29 Nov · Ankit Tiwari LIVE", theme: "Let the Synergy Ignite" },
-  { year: "2026", logo: "synergy-2026-ignite.png", sub: "5–6 Dec · Sachin-Jigar LIVE", theme: "Coming up", now: true },
+  { year: "2025", logo: "synergy-2025.svg", sub: "28–29 Nov · Ankit Tiwari LIVE", theme: "Let the Synergy Ignite" },
+  { year: "2026", logo: "synergy-2026.svg", sub: "5–6 Dec · Sachin-Jigar LIVE", theme: "Coming up", now: true },
 ];

@@ -11,7 +11,7 @@ export function Loader({ done }) {
   return (
     <div id="loader" className={done ? "done" : ""} aria-hidden="true">
       <div className="loader-inner">
-        <img className="loader-logo" src={A("img/synergy-2026-ignite.png")} alt="SYNERGY 2026: Let the Synergy Ignite" />
+        <img className="loader-logo" src={A("img/synergy-2026.svg")} alt="SYNERGY 2026: Let the Synergy Ignite" />
         <div className="loader-bar"><i /></div>
         <small>Setting up the stage…</small>
       </div>
@@ -165,7 +165,7 @@ export function StarNight() {
           <YouTube id="Yju1cMFxBGc" label="Play the Sachin-Jigar announcement video">
             <img loading="lazy" decoding="async" src={A("img/sachin-jigar-wide.jpg")} alt="Sachin Sanghvi and Jigar Saraiya" className="sj-photo" />
             <span className="shade" aria-hidden="true" />
-            <img loading="lazy" decoding="async" src={A("img/synergy-2026-ignite.png")} alt="SYNERGY 2026 logo" className="logo-poster" />
+            <img loading="lazy" decoding="async" src={A("img/synergy-2026.svg")} alt="SYNERGY 2026 logo" className="logo-poster" />
             <span className="poster-title">SACHIN-JIGAR<br /><small>LIVE AT SYNERGY 2026</small></span>
             <span className="play" aria-hidden="true" />
           </YouTube>
@@ -202,7 +202,7 @@ export function Footer() {
     <footer className="foot">
       <div className="foot-grid">
         <div className="foot-brand">
-          <img loading="lazy" decoding="async" className="foot-logo" src={A("img/synergy-2026-ignite.png")} alt="SYNERGY 2026" />
+          <img loading="lazy" decoding="async" className="foot-logo" src={A("img/synergy-2026.svg")} alt="SYNERGY 2026" />
           <p>The annual fest of United University, Prayagraj<br /><span className="muted">5–6 December 2026 · Rawatpur, Jhalwa, Prayagraj</span></p>
         </div>
         <nav className="foot-links" aria-label="Footer">

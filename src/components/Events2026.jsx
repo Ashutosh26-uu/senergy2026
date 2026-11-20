@@ -155,7 +155,6 @@ export default function Events2026() {
   }, []);
 
   const soonest = EVENTS.filter(e => e.regAt && e.regAt > now).sort((a, b) => a.regAt - b.regAt)[0];
-  const sameDeadline = soonest ? EVENTS.filter(e => e.regAt === soonest.regAt).length : 0;
 
   const share = async e => {
     const url = `${location.origin}${location.pathname}#${e.id}`;
@@ -183,11 +182,11 @@ export default function Events2026() {
             <li><b>6 Dec</b><span>Day 2: {EVENTS.filter(e => e.day === "6").length} events + Star Night: <strong>Sachin-Jigar LIVE</strong></span></li>
           </ol>
           <div className="soon"><span className="dot" /><span>{soonest
-            ? `Next registration deadline: ${shortDate(soonest.regAt)} (${sameDeadline} event${sameDeadline > 1 ? "s" : ""}, closes in ${fmtLeft(soonest.regAt - now)}). Tap a flyer and scan its QR code to register.`
+            ? `Registrations close on ${shortDate(soonest.regAt)}, in ${fmtLeft(soonest.regAt - now)}. Tap a flyer and scan its QR code to register.`
             : "Registrations for SYNERGY 2026 have closed. See you on 5–6 December!"}</span></div>
         </div>
         <figure className="logo-card reveal" data-tilt>
-          <img loading="lazy" decoding="async" src={A("img/synergy-2026-ignite.png")} alt="SYNERGY 2026: Let the Synergy Ignite" />
+          <img loading="lazy" decoding="async" src={A("img/synergy-2026.svg")} alt="SYNERGY 2026: Let the Synergy Ignite" />
         </figure>
       </div>
 
