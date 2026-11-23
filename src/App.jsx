@@ -7,7 +7,7 @@ import Events2026 from "./components/Events2026.jsx";
 import Archive from "./components/Archive.jsx";
 import CampusRing from "./components/CampusRing.jsx";
 import Venue from "./components/Venue.jsx";
-import { GetPass, PassPopup, PosterPopup } from "./components/GetPass.jsx";
+import { GetPass, PassPopup } from "./components/GetPass.jsx";
 
 // three.js + React Three Fiber load in their own chunk, so the page and its text show first
 const Stage = lazy(() => import("./three/Stage.jsx"));
@@ -80,7 +80,6 @@ export default function App() {
         <Footer />
         <BackToTop />
         <PassPopup />
-        <PosterPopup ready={ready} />
       </ViewerProvider>
     </ToastProvider>
   );

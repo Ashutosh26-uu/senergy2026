@@ -1,6 +1,6 @@
 // "Get your pass": a student enters their UU ID and full name, the gate server checks them and hands
-// over the signed pass once; the card is drawn here as a PNG. Plus the schedule/poster popup.
-import { useCallback, useEffect, useRef, useState } from "react";
+// over the signed pass once; the card is drawn here as a PNG.
+import { useCallback, useEffect, useState } from "react";
 import { A, FEST, PASS_SERVER } from "../data/site.js";
 import { Modal, useViewer } from "./ui.jsx";
 
@@ -191,22 +191,4 @@ export function PassPopup() {
       <PassForm compact />
     </Modal>
   </>;
-}
-
-/** Shows the schedule and the Sachin-Jigar poster once a day, a moment after the page is ready. */
-export function PosterPopup({ ready }) {
-  const view = useViewer(), shown = useRef(false);
-  useEffect(() => {
-    if (!ready || shown.current) return;
-    const key = "synergy-posters", today = new Date().toDateString();
-    try { if (localStorage.getItem(key) === today) return; } catch { /* storage blocked: show anyway */ }
-    const t = setTimeout(() => {
-      if (shown.current || document.querySelector("dialog[open]")) return;
-      shown.current = true;
-      view(POSTERS, 0);
-      try { localStorage.setItem(key, today); } catch { /* ignore */ }
-    }, 1800);
-    return () => clearTimeout(t);
-  }, [ready, view]);
-  return null;
 }
