@@ -7,81 +7,224 @@
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#07060b">
 <title>SYNERGY 2026 · Gate</title>
+<link rel="icon" href="../assets/img/logo_small.png">
 <style>
-  :root { --bg:#07060b; --card:#14111f; --line:rgba(255,255,255,.12); --ink:#f4f1fa; --muted:#a9a3b8; --ok:#16c172; --bad:#ff3b4e; --warn:#ffb547; }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  button, input, textarea { font: inherit; }
-  .screen { display: none; min-height: 100vh; padding: 16px; flex-direction: column; gap: 14px; }
-  .screen.on { display: flex; }
-  h1 { margin: 6px 0 0; font-size: 1.3rem; }
-  .muted { color: var(--muted); font-size: .9rem; margin: 0; }
-  input, textarea { width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
-  .btn { padding: 15px; border: 0; border-radius: 14px; background: linear-gradient(100deg,#ff2e88,#a35cff 45%,#29e0ff); color: #fff; font-weight: 700; cursor: pointer; }
-  .btn.ghost { background: var(--card); border: 1px solid var(--line); }
-  .btn.danger { background: #5a1019; border: 1px solid #ff3b4e; }
-  .btn:disabled { opacity: .5; }
-  .err { color: var(--bad); font-weight: 600; min-height: 1.2em; margin: 0; }
-  .top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  .pill { padding: 6px 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: .8rem; white-space: nowrap; }
-  .pill.on { border-color: var(--ok); color: var(--ok); } .pill.off { border-color: var(--bad); color: var(--bad); }
-  .cam { position: relative; width: 100%; aspect-ratio: 1; border-radius: 18px; overflow: hidden; background: #000; }
-  .cam video { width: 100%; height: 100%; object-fit: cover; }
-  .cam .frame { position: absolute; inset: 14%; border: 3px solid rgba(255,255,255,.8); border-radius: 18px; box-shadow: 0 0 0 999px rgba(0,0,0,.35); }
-  .row { display: flex; gap: 10px; } .row > * { flex: 1; }
-  .stats { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); }
-  .result { position: fixed; inset: 0; display: none; flex-direction: column; padding: 18px; gap: 14px; z-index: 10; overflow: auto; }
-  .result.on { display: flex; }
-  .result.ok { background: #0b3d22; } .result.bad { background: #4a0b12; } .result.warn { background: #4a3305; } .result.busy { background: #15122a; }
-  .verdict { font-size: 2.2rem; font-weight: 900; text-align: center; letter-spacing: .02em; }
-  .why { text-align: center; font-weight: 600; margin: 0; }
-  .who { display: flex; gap: 14px; align-items: center; background: rgba(0,0,0,.3); border-radius: 18px; padding: 14px; }
-  .who img, .who .nophoto { width: 132px; height: 165px; object-fit: cover; border-radius: 12px; background: #2a2533; flex: none; }
-  .who .nophoto { display: grid; place-items: center; text-align: center; font-weight: 700; color: var(--warn); font-size: .85rem; padding: 8px; }
-  .who b { display: block; font-size: 1.3rem; line-height: 1.2; } .who code { display: block; margin-top: 6px; font-size: 1rem; }
-  .actions { margin-top: auto; display: grid; gap: 10px; }
-  .log { font-size: .8rem; color: var(--muted); max-height: 8em; overflow: auto; }
-  .lock { text-align: center; justify-content: center; }
+  :root {
+    --bg:#07060b; --panel:rgba(20,17,33,.72); --line:rgba(255,255,255,.1); --ink:#f6f3fc; --muted:#a39db4;
+    --hot:#ff2e88; --violet:#a35cff; --cyan:#29e0ff; --ok:#19d27e; --bad:#ff3b55; --warn:#ffb547;
+    --grad:linear-gradient(110deg,var(--hot),var(--violet) 48%,var(--cyan));
+    --r:22px; --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { margin:0; min-height:100%; background:var(--bg); color:var(--ink); font:16px/1.4 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  body { overflow-x:hidden; }
+  body::before { content:""; position:fixed; inset:-20%; z-index:-1; pointer-events:none;
+    background:radial-gradient(40% 30% at 15% 10%,rgba(255,46,136,.22),transparent 70%),radial-gradient(45% 35% at 90% 20%,rgba(41,224,255,.16),transparent 70%),radial-gradient(50% 40% at 50% 100%,rgba(163,92,255,.18),transparent 70%);
+    animation:drift 18s ease-in-out infinite alternate; }
+  @keyframes drift { to { transform:translate3d(3%,-2%,0) scale(1.05); } }
+  button, input, textarea { font:inherit; color:inherit; }
+  button { cursor:pointer; }
+  [hidden] { display:none !important; }
+
+  .screen { display:none; min-height:100dvh; padding:max(14px,env(safe-area-inset-top)) 16px calc(18px + var(--safe-b)); flex-direction:column; gap:14px; max-width:560px; margin:0 auto; }
+  .screen.on { display:flex; animation:in .35s ease-out; }
+  @keyframes in { from { opacity:0; transform:translateY(8px); } }
+  .glass { background:var(--panel); border:1px solid var(--line); border-radius:var(--r); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
+  .muted { color:var(--muted); font-size:.9rem; margin:0; }
+  .btn { padding:15px 18px; border:0; border-radius:16px; background:var(--grad); background-size:150% 100%; color:#fff; font-weight:800; letter-spacing:.01em; box-shadow:0 10px 30px -12px rgba(255,46,136,.8); transition:transform .15s, background-position .3s; }
+  .btn:active { transform:scale(.97); } .btn:hover { background-position:100% 0; }
+  .btn.ghost { background:rgba(255,255,255,.06); border:1px solid var(--line); box-shadow:none; font-weight:700; }
+  .btn.danger { background:rgba(255,59,85,.16); border:1px solid rgba(255,59,85,.7); box-shadow:none; color:#ffd3da; }
+  input, textarea { width:100%; padding:14px 16px; border-radius:14px; border:1px solid var(--line); background:rgba(0,0,0,.35); outline:none; }
+  input:focus, textarea:focus { border-color:var(--cyan); box-shadow:0 0 0 3px rgba(41,224,255,.18); }
+  .err { color:var(--bad); font-weight:700; min-height:1.2em; margin:0; }
+
+  /* brand header */
+  .brand { display:flex; align-items:center; gap:12px; }
+  .brand img { height:42px; width:auto; border-radius:10px; background:#fff; box-shadow:0 6px 20px -8px rgba(163,92,255,.8); }
+  .brand .t { display:flex; flex-direction:column; line-height:1.15; min-width:0; }
+  .brand b { font-size:1.08rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .brand small { color:var(--muted); font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; }
+  .top { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .status { display:flex; align-items:center; gap:7px; padding:7px 12px; border-radius:999px; font-size:.8rem; font-weight:700; background:rgba(255,255,255,.06); border:1px solid var(--line); white-space:nowrap; }
+  .status i { width:8px; height:8px; border-radius:50%; background:var(--muted); }
+  .status.on i { background:var(--ok); box-shadow:0 0 0 0 rgba(25,210,126,.7); animation:ping 1.8s infinite; } .status.on { color:#bff5da; }
+  .status.off i { background:var(--bad); } .status.off { color:#ffc2cc; border-color:rgba(255,59,85,.5); }
+  @keyframes ping { 70% { box-shadow:0 0 0 8px rgba(25,210,126,0); } 100% { box-shadow:0 0 0 0 rgba(25,210,126,0); } }
+
+  /* camera */
+  .cam { position:relative; width:100%; aspect-ratio:1; border-radius:28px; overflow:hidden; background:#000; isolation:isolate; box-shadow:0 30px 60px -30px rgba(0,0,0,.9), 0 0 0 1px var(--line); }
+  .cam video { width:100%; height:100%; object-fit:cover; }
+  .cam .shade { position:absolute; inset:0; background:radial-gradient(circle at 50% 50%,transparent 37%,rgba(5,4,10,.55) 38%); pointer-events:none; }
+  .cam .box { position:absolute; inset:16%; pointer-events:none; }
+  .cam .box i { position:absolute; width:34px; height:34px; border:4px solid #fff; filter:drop-shadow(0 0 6px rgba(41,224,255,.9)); }
+  .cam .box i:nth-child(1) { top:0; left:0; border-right:0; border-bottom:0; border-radius:14px 0 0 0; }
+  .cam .box i:nth-child(2) { top:0; right:0; border-left:0; border-bottom:0; border-radius:0 14px 0 0; }
+  .cam .box i:nth-child(3) { bottom:0; left:0; border-right:0; border-top:0; border-radius:0 0 0 14px; }
+  .cam .box i:nth-child(4) { bottom:0; right:0; border-left:0; border-top:0; border-radius:0 0 14px 0; }
+  .cam .laser { position:absolute; left:18%; right:18%; top:18%; height:3px; border-radius:3px; background:var(--grad); box-shadow:0 0 18px 3px rgba(41,224,255,.6); animation:sweep 2.2s ease-in-out infinite; pointer-events:none; }
+  @keyframes sweep { 0%,100% { top:18%; opacity:.2; } 10%,90% { opacity:1; } 50% { top:80%; } }
+  .cam .tip { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); padding:7px 14px; border-radius:999px; background:rgba(5,4,10,.7); font-size:.82rem; font-weight:600; white-space:nowrap; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  .cam .tools { position:absolute; top:12px; right:12px; display:flex; gap:8px; }
+  .icon-btn { width:44px; height:44px; border-radius:50%; border:1px solid rgba(255,255,255,.25); background:rgba(5,4,10,.6); display:grid; place-items:center; font-size:1.1rem; -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); }
+  .icon-btn[aria-pressed="true"] { background:var(--warn); color:#1a1200; border-color:transparent; }
+  .cam.paused .laser { animation-play-state:paused; opacity:0; }
+  .cam.flash::after { content:""; position:absolute; inset:0; background:#fff; animation:flash .35s ease-out forwards; }
+  @keyframes flash { from { opacity:.55; } to { opacity:0; } }
+
+  /* stats */
+  .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .stat { padding:12px 12px 10px; }
+  .stat b { display:block; font-size:1.55rem; font-weight:900; font-variant-numeric:tabular-nums; line-height:1.1; }
+  .stat span { color:var(--muted); font-size:.74rem; }
+  .stat.ok b { color:var(--ok); } .stat.bad b { color:#ff8a9c; }
+  #lastScan { font-size:1.1rem; white-space:nowrap; padding-top:.3rem; }
+  .sync { text-align:center; font-size:.82rem; color:var(--warn); margin:-4px 0 0; }
+
+  /* manual entry */
+  details.manual { padding:0; }
+  details.manual summary { list-style:none; padding:14px 16px; font-weight:700; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+  details.manual summary::-webkit-details-marker { display:none; }
+  details.manual summary::after { content:"＋"; color:var(--muted); }
+  details.manual[open] summary::after { content:"−"; }
+  details.manual .row { display:flex; gap:10px; padding:0 14px 14px; }
+
+  /* recent */
+  .recent { padding:6px 6px 8px; }
+  .recent h3 { margin:8px 10px 6px; font-size:.78rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+  .feed { list-style:none; margin:0; padding:0; max-height:220px; overflow:auto; }
+  .feed li { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:12px; font-size:.88rem; }
+  .feed li + li { border-top:1px solid var(--line); }
+  .feed .dot { width:10px; height:10px; border-radius:50%; flex:none; background:var(--muted); }
+  .feed .ok .dot { background:var(--ok); } .feed .bad .dot { background:var(--bad); } .feed .warn .dot { background:var(--warn); }
+  .feed .what { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .feed time { color:var(--muted); font-size:.78rem; font-variant-numeric:tabular-nums; }
+  .feed .empty { color:var(--muted); justify-content:center; }
+
+  /* setup / loading / locked */
+  .hero { text-align:center; display:flex; flex-direction:column; align-items:center; gap:10px; padding-top:8px; }
+  .hero img { width:min(240px,62vw); height:auto; border-radius:18px; background:#fff; box-shadow:0 20px 60px -20px rgba(163,92,255,.9); }
+  .hero h1 { margin:6px 0 0; font-size:1.45rem; }
+  .steps { display:grid; gap:8px; padding:14px; counter-reset:s; }
+  .steps div { display:flex; gap:12px; align-items:center; font-size:.92rem; }
+  .steps div::before { counter-increment:s; content:counter(s); flex:none; width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:.8rem; background:var(--grad); }
+  .center { justify-content:center; align-items:center; text-align:center; }
+  .ring { width:96px; height:96px; border-radius:50%; background:conic-gradient(var(--hot),var(--violet),var(--cyan),var(--hot)); -webkit-mask:radial-gradient(circle,transparent 58%,#000 60%); mask:radial-gradient(circle,transparent 58%,#000 60%); animation:spin 1.1s linear infinite; }
+  @keyframes spin { to { transform:rotate(1turn); } }
+  .lock { width:96px; height:96px; border-radius:28px; display:grid; place-items:center; font-size:2.6rem; background:rgba(255,59,85,.15); border:1px solid rgba(255,59,85,.5); }
+
+  /* verdict overlay */
+  .result { position:fixed; inset:0; z-index:20; display:none; flex-direction:column; align-items:center; gap:14px; padding:max(18px,env(safe-area-inset-top)) 18px calc(18px + var(--safe-b)); overflow:auto; text-align:center; }
+  .result.on { display:flex; animation:pop .28s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes pop { from { opacity:0; transform:scale(.96); } }
+  .result.ok   { background:radial-gradient(120% 80% at 50% 0%,#139a5b,#062a19 70%); }
+  .result.warn { background:radial-gradient(120% 80% at 50% 0%,#9a6a10,#2a1c05 70%); }
+  .result.bad  { background:radial-gradient(120% 80% at 50% 0%,#b3122e,#2a0710 70%); }
+  .result.bad .badge { animation:shake .5s; }
+  .result.busy { background:radial-gradient(120% 80% at 50% 0%,#2c2060,#0d0a1d 70%); }
+  @keyframes shake { 20%,60% { transform:translateX(-10px); } 40%,80% { transform:translateX(10px); } }
+  .badge { width:84px; height:84px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.14); border:2px solid rgba(255,255,255,.5); margin-top:4px; }
+  .badge svg { width:46px; height:46px; stroke:#fff; stroke-width:5; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+  .badge path { stroke-dasharray:60; stroke-dashoffset:60; animation:draw .45s .1s ease-out forwards; }
+  @keyframes draw { to { stroke-dashoffset:0; } }
+  .result.busy .badge { border-color:transparent; background:conic-gradient(var(--hot),var(--violet),var(--cyan),var(--hot)); -webkit-mask:radial-gradient(circle,transparent 56%,#000 58%); mask:radial-gradient(circle,transparent 56%,#000 58%); animation:spin 1s linear infinite; }
+  .verdict { font-size:clamp(2rem,9vw,2.8rem); font-weight:900; letter-spacing:.03em; line-height:1; margin:2px 0 0; }
+  .why { font-weight:600; margin:0; max-width:30rem; opacity:.95; }
+  .who { display:flex; flex-direction:column; align-items:center; gap:10px; width:100%; max-width:380px; }
+  .who .ph { position:relative; }
+  .who img, .who .nophoto { width:min(220px,58vw); aspect-ratio:4/5; object-fit:cover; border-radius:24px; background:#2a2533; border:4px solid rgba(255,255,255,.9); box-shadow:0 24px 60px -20px rgba(0,0,0,.8); }
+  .result.ok .who img { box-shadow:0 0 0 6px rgba(25,210,126,.35), 0 24px 60px -20px rgba(0,0,0,.8); }
+  .who .nophoto { display:grid; place-items:center; padding:16px; font-weight:800; color:var(--warn); font-size:.95rem; border-style:dashed; }
+  .who b { font-size:1.45rem; line-height:1.2; }
+  .who .meta { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .chip { padding:6px 12px; border-radius:999px; background:rgba(0,0,0,.3); border:1px solid rgba(255,255,255,.2); font-size:.85rem; font-weight:600; }
+  .chip.mono { font-family:ui-monospace,Consolas,monospace; letter-spacing:.04em; }
+  .hint { margin:0; padding:12px 16px; border-radius:16px; background:rgba(0,0,0,.28); border:1px solid rgba(255,255,255,.16); font-weight:700; max-width:380px; width:100%; }
+  .actions { margin-top:auto; display:grid; gap:10px; width:100%; max-width:380px; }
+  .result .btn { background:#fff; color:#111; box-shadow:0 14px 34px -14px rgba(0,0,0,.7); font-size:1.08rem; }
+  .result .btn.danger { background:rgba(0,0,0,.25); color:#fff; border:1px solid rgba(255,255,255,.55); }
+  .auto { height:5px; border-radius:5px; background:rgba(255,255,255,.2); overflow:hidden; }
+  .auto i { display:block; height:100%; width:100%; background:#fff; transform-origin:left; }
+  .auto.run i { animation:count var(--t,6s) linear forwards; }
+  @keyframes count { to { transform:scaleX(0); } }
+  .auto-note { font-size:.78rem; opacity:.8; margin:-4px 0 0; }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
 </style>
 </head>
 <body>
 
 <!-- 1. first run: scan the gate code shown in the admin panel -->
 <section class="screen" id="setup">
-  <h1>SYNERGY 2026 · Gate setup</h1>
-  <p class="muted">Point the camera at the <b>gate code</b> the admin shows you (Admin → Gates). Or paste the code below.</p>
-  <div class="cam"><video id="setupVideo" playsinline muted></video><div class="frame"></div></div>
-  <textarea id="setupCode" rows="2" placeholder="SYN26GATE:…"></textarea>
-  <button class="btn" id="setupGo">Connect this gate</button>
+  <div class="hero">
+    <img src="../assets/img/synergy-2026.svg" alt="SYNERGY 2026">
+    <h1>Gate setup</h1>
+    <p class="muted">Connect this phone to a gate in under a minute.</p>
+  </div>
+  <div class="glass steps">
+    <div><span>Admin opens <b>Gates</b> and creates (or picks) this gate</span></div>
+    <div><span>Point this camera at the gate's QR code</span></div>
+    <div><span>The student list loads once, then you're ready</span></div>
+  </div>
+  <div class="cam"><video id="setupVideo" playsinline muted></video><div class="shade"></div><div class="box"><i></i><i></i><i></i><i></i></div><div class="laser"></div><div class="tip">Scan the gate QR</div></div>
+  <details class="glass manual"><summary>Can't scan? Paste the code</summary>
+    <div class="row" style="flex-direction:column"><textarea id="setupCode" rows="2" placeholder="SYN26GATE:…"></textarea><button class="btn" id="setupGo">Connect this gate</button></div>
+  </details>
   <p class="err" id="setupErr"></p>
 </section>
 
-<!-- 2. loading the student data -->
-<section class="screen lock" id="loading"><h1 id="loadingTitle">Connecting…</h1><p class="muted" id="loadingText"></p></section>
+<!-- 2. loading -->
+<section class="screen center" id="loading">
+  <div class="ring"></div>
+  <h1 id="loadingTitle" style="margin:18px 0 0">Connecting…</h1>
+  <p class="muted" id="loadingText"></p>
+</section>
 
 <!-- 3. scanning -->
 <section class="screen" id="scan">
-  <div class="top"><b id="gateName"></b><span class="pill" id="net">…</span></div>
-  <div class="cam"><video id="video" playsinline muted></video><div class="frame"></div></div>
-  <div class="stats"><span id="countToday"></span><span id="queue"></span></div>
-  <div class="row" id="manualRow"><input id="manual" placeholder="Damaged card? Type the ID" autocapitalize="characters" autocomplete="off"><button class="btn ghost" id="manualGo" style="flex:none">Check</button></div>
-  <div class="log" id="log"></div>
+  <div class="top">
+    <div class="brand"><img src="../assets/img/synergy-2026.svg" alt=""><div class="t"><small>Entry gate</small><b id="gateName"></b></div></div>
+    <span class="status" id="net"><i></i><span>…</span></span>
+  </div>
+  <div class="cam" id="camBox">
+    <video id="video" playsinline muted></video>
+    <div class="shade"></div><div class="box"><i></i><i></i><i></i><i></i></div><div class="laser"></div>
+    <div class="tools">
+      <button class="icon-btn" id="soundBtn" aria-pressed="false" aria-label="Sound">🔔</button>
+      <button class="icon-btn" id="torchBtn" aria-pressed="false" aria-label="Torch" hidden>🔦</button>
+    </div>
+    <div class="tip" id="camTip">Hold the pass QR inside the frame</div>
+  </div>
+  <div class="stats">
+    <div class="glass stat ok"><b id="countToday">0</b><span>admitted today</span></div>
+    <div class="glass stat bad"><b id="refusedToday">0</b><span>refused today</span></div>
+    <div class="glass stat"><b id="lastScan">–</b><span>last scan</span></div>
+  </div>
+  <p class="sync" id="queue"></p>
+  <details class="glass manual" id="manualRow"><summary>Damaged card? Enter the ID</summary>
+    <div class="row"><input id="manual" placeholder="UU26XXXXXXX" autocapitalize="characters" autocomplete="off" inputmode="text"><button class="btn" id="manualGo" style="flex:none">Check</button></div>
+  </details>
+  <div class="glass recent"><h3>Recent scans</h3><ul class="feed" id="log"><li class="empty">No scans yet</li></ul></div>
 </section>
 
 <!-- 4. gate switched off -->
-<section class="screen lock" id="locked">
-  <h1>This gate is switched off</h1>
-  <p class="muted" id="lockedWhy">The admin has turned this gate off. Student data on this phone has been erased.</p>
-  <button class="btn" id="relink">Set up again</button>
+<section class="screen center" id="locked">
+  <div class="lock">🔒</div>
+  <h1 style="margin:18px 0 6px">Gate switched off</h1>
+  <p class="muted" id="lockedWhy" style="max-width:24rem">The admin has turned this gate off. Student data on this phone has been erased.</p>
+  <button class="btn" id="relink" style="margin-top:16px;width:100%;max-width:320px">Set up again</button>
 </section>
 
 <!-- verdict -->
-<div class="result" id="result">
-  <div class="verdict" id="verdict"></div>
+<div class="result" id="result" role="alert">
+  <div class="badge" id="badge"></div>
+  <p class="verdict" id="verdict"></p>
   <p class="why" id="why"></p>
   <div class="who" id="who"></div>
-  <p class="why" id="hint"></p>
+  <p class="hint" id="hint"></p>
   <div class="actions">
+    <div class="auto" id="auto" hidden><i></i></div>
+    <p class="auto-note" id="autoNote" hidden>Next scan starts automatically · tap the photo to hold</p>
     <button class="btn danger" id="flag" hidden>Wrong person: refuse and block this pass</button>
     <button class="btn" id="next">Next scan</button>
   </div>
@@ -101,6 +244,34 @@ const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kol
 let link = ls.get("link", null);              // { u: server URL, c: gate code, n: gate name }
 let roster = null, cfg = { allowOffline: false, allowManual: true }, blocked = new Set();
 let setupCam = null, cam = null;
+
+/* ---------------- sound: short tones made on the phone (no files) */
+let audio = null, soundOn = ls.get("sound", true);
+const unlockAudio = () => { try { audio ??= new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch {} };
+addEventListener("pointerdown", unlockAudio, { passive: true });
+function tone(kind) {
+  if (!soundOn || !audio) return;
+  const notes = kind === "ok" ? [[880, 0], [1320, .11]] : kind === "warn" ? [[660, 0], [660, .16]] : [[220, 0], [180, .18]];
+  for (const [f, t] of notes) {
+    const o = audio.createOscillator(), g = audio.createGain(), at = audio.currentTime + t;
+    o.type = kind === "bad" ? "square" : "sine"; o.frequency.value = f;
+    g.gain.setValueAtTime(.0001, at); g.gain.exponentialRampToValueAtTime(kind === "bad" ? .18 : .25, at + .02); g.gain.exponentialRampToValueAtTime(.0001, at + .16);
+    o.connect(g).connect(audio.destination); o.start(at); o.stop(at + .18);
+  }
+}
+const drawSound = () => { $("soundBtn").setAttribute("aria-pressed", !soundOn); $("soundBtn").textContent = soundOn ? "🔔" : "🔕"; };
+$("soundBtn").onclick = () => { soundOn = !soundOn; ls.set("sound", soundOn); drawSound(); unlockAudio(); tone("ok"); };
+drawSound();
+
+/* ---------------- torch (phones that support it) */
+function setupTorch() {
+  const track = cam?.stream?.getVideoTracks?.()[0];
+  const caps = track?.getCapabilities?.() || {};
+  if (!caps.torch) return;
+  let on = false;
+  $("torchBtn").hidden = false;
+  $("torchBtn").onclick = async () => { on = !on; try { await track.applyConstraints({ advanced: [{ torch: on }] }); $("torchBtn").setAttribute("aria-pressed", on); } catch { on = !on; } };
+}
 
 /* ---------------- setup */
 async function connect(code) {
@@ -126,7 +297,7 @@ async function boot() {
   if (!link) {
     show("setup");
     setupCam = new QRCamera($("setupVideo"), t => { if (readSetup(t)) connect(t); });
-    setupCam.start().catch(() => { $("setupErr").textContent = "Camera blocked. Paste the code instead."; });
+    setupCam.start().catch(() => { $("setupErr").textContent = "Camera blocked. Open 'Can't scan?' and paste the code."; });
     return;
   }
   show("loading"); $("loadingTitle").textContent = "Connecting…"; $("loadingText").textContent = "";
@@ -139,63 +310,87 @@ async function boot() {
   roster = await store.get("roster");
   if (h && (!roster || (await store.get("packKey")) !== h.packKey)) {
     if (!h.packReady) { $("loadingTitle").textContent = "Waiting for the admin"; $("loadingText").textContent = "The student list has not been uploaded yet. Retrying…"; setTimeout(boot, 15000); return; }
-    $("loadingTitle").textContent = "Loading the student list…"; $("loadingText").textContent = "About 10 MB, only once.";
+    $("loadingTitle").textContent = "Loading the student list"; $("loadingText").textContent = "About 9 MB, only this once.";
     const p = await api(link.u, { action: "gate.pack", code: link.c }, 120000);
     if (p.revoked) return wipe(p.error);
     if (!p.ok) { $("loadingText").textContent = p.error; setTimeout(boot, 15000); return; }
+    $("loadingTitle").textContent = "Unlocking…";
     const pack = await decryptPack(b64u(p.b64.replace(/\+/g, "-").replace(/\//g, "_")), h.packKey);
     roster = {}; for (const [id, name, course, photo] of pack.students) roster[id] = { id, name, course, photo };
     await store.set("roster", roster); await store.set("packKey", h.packKey);
   }
   $("gateName").textContent = ls.get("gateName", link.n || "Gate");
   $("manualRow").hidden = !cfg.allowManual;
-  setNet(!!h); stats(); show("scan");
+  setNet(!!h); stats(); renderFeed(); show("scan");
   cam = new QRCamera($("video"), t => handle(t, false));
-  cam.start().catch(() => addLog("Camera blocked: allow camera access for this page."));
+  cam.start().then(setupTorch).catch(() => { $("camTip").textContent = "Camera blocked: allow camera for this page"; });
   flush();
 }
 
 /* ---------------- gate switched off / code replaced: erase everything */
 async function wipe(why) {
   cam?.stop(); await store.clear();
-  ["cfg", "blocked", "gateName", "queue", "seen"].forEach(ls.del);
+  ["cfg", "blocked", "gateName", "queue", "seen", "feed"].forEach(ls.del);
   $("lockedWhy").textContent = (why || "This gate is no longer active.") + " Student data on this phone has been erased.";
   show("locked");
 }
 
-/* ---------------- scanning */
-let current = null;
+/* ---------------- verdict screen */
+const ICON = {
+  ok: '<svg viewBox="0 0 48 48"><path d="M12 25l8 8 16-18"/></svg>',
+  warn: '<svg viewBox="0 0 48 48"><path d="M24 12v15M24 35v.5"/></svg>',
+  bad: '<svg viewBox="0 0 48 48"><path d="M15 15l18 18M33 15L15 33"/></svg>',
+  busy: "",
+};
+let current = null, autoTimer = 0, held = false;
 function result(kind, verdict, why, p, hint, canFlag) {
-  current = p;
+  current = p; clearTimeout(autoTimer); held = false;
   $("result").className = `result on ${kind}`;
-  $("verdict").textContent = verdict; $("why").textContent = why || ""; $("hint").textContent = hint || "";
-  $("who").style.display = p ? "flex" : "none";
-  $("who").innerHTML = p ? (p.photo ? `<img alt="" src="data:image/jpeg;base64,${p.photo}">` : `<div class="nophoto">NO PHOTO ON FILE<br>Check college ID card</div>`)
-    + `<div><b>${esc(p.name)}</b><code>${esc(p.id)}</code><span class="muted">Course code ${esc(p.course)}</span></div>` : "";
+  $("badge").innerHTML = ICON[kind] || "";
+  $("verdict").textContent = verdict; $("why").textContent = why || "";
+  $("hint").textContent = hint || ""; $("hint").hidden = !hint;
+  $("who").hidden = !p;
+  $("who").innerHTML = p ? `<div class="ph">${p.photo ? `<img alt="" src="data:image/jpeg;base64,${p.photo}">` : `<div class="nophoto">NO PHOTO ON FILE<br>Check their college ID card</div>`}</div>
+    <b>${esc(p.name)}</b><div class="meta"><span class="chip mono">${esc(p.id)}</span><span class="chip">Course ${esc(p.course)}</span></div>` : "";
   $("flag").hidden = !canFlag;
-  navigator.vibrate?.(kind === "ok" ? 80 : [200, 80, 200]);
-  if (cam) cam.paused = true;
+  $("next").hidden = kind === "busy";
+  // a clean ALLOW moves on by itself after a few seconds; refusals and warnings always wait for the guard
+  const auto = kind === "ok";
+  $("auto").hidden = $("autoNote").hidden = !auto;
+  $("auto").classList.remove("run"); void $("auto").offsetWidth;
+  if (auto) { $("auto").style.setProperty("--t", "6s"); $("auto").classList.add("run"); autoTimer = setTimeout(() => { if (!held) $("next").click(); }, 6000); }
+  if (kind !== "busy") { navigator.vibrate?.(kind === "ok" ? 80 : [220, 80, 220]); tone(kind); }
+  if (cam) { cam.paused = true; $("camBox").classList.add("paused"); }
 }
-$("next").onclick = () => { $("result").className = "result"; if (cam) cam.paused = false; stats(); };
+$("who").onclick = () => { if (!$("auto").hidden && !held) { held = true; clearTimeout(autoTimer); $("auto").classList.remove("run"); $("autoNote").textContent = "Held · tap Next scan when done"; } };
+$("next").onclick = () => {
+  clearTimeout(autoTimer); $("result").className = "result"; $("autoNote").textContent = "Next scan starts automatically · tap the photo to hold";
+  if (cam) { cam.paused = false; $("camBox").classList.remove("paused"); }
+  stats();
+};
 $("flag").onclick = async () => {
+  clearTimeout(autoTimer);
   if (!current || !confirm(`Block ${current.name}'s pass? They will need to go to the SYNERGY desk.`)) return;
-  try { const r = await api(link.u, { action: "gate.flag", code: link.c, id: current.id, reason: "wrong person at gate" }); if (r.revoked) return wipe(r.error); blocked.add(current.id); addLog(`${nowIST()} BLOCKED ${current.id} (wrong person)`); }
+  try { const r = await api(link.u, { action: "gate.flag", code: link.c, id: current.id, reason: "wrong person at gate" }); if (r.revoked) return wipe(r.error); blocked.add(current.id); addLog("bad", `Blocked ${current.name} (wrong person)`); }
   catch { alert("No connection: tell the SYNERGY desk to block " + current.id); }
   $("next").click();
 };
 
+/* ---------------- scanning */
 async function handle(text, manual) {
+  unlockAudio();
+  $("camBox").classList.remove("flash"); void $("camBox").offsetWidth; $("camBox").classList.add("flash");
   let id, qr = null;
   if (manual) {
     id = text.trim().toUpperCase();
     if (!/^UU\d{9}$/.test(id)) return result("bad", "NOT AN ID", "IDs look like UU26 followed by 7 digits.", null, "");
   } else {
     const v = await verifyPass(text);
-    if (v.bad) { addLog(`${nowIST()} INVALID QR`); return result("bad", "INVALID PASS", v.bad, null, "Do not allow entry."); }
+    if (v.bad) { refused(); addLog("bad", "Invalid QR"); return result("bad", "INVALID PASS", v.bad, null, "Do not allow entry."); }
     id = v.id; qr = v.text;
   }
   const p = roster[id] || null;
-  if (!p) return result("bad", "NOT ON LIST", "This ID is not in the student list.", null, "Do not allow entry. Send to the SYNERGY desk.");
+  if (!p) { refused(); return result("bad", "NOT ON LIST", "This ID is not in the student list.", null, "Do not allow entry. Send to the SYNERGY desk."); }
   result("busy", "Checking…", "", p, "");
   let r;
   try { r = await api(link.u, manual ? { action: "gate.scan", code: link.c, id } : { action: "gate.scan", code: link.c, qr }, 8000); setNet(true); }
@@ -206,46 +401,55 @@ async function handle(text, manual) {
   switch (r.status) {
     case "admitted":
       seen[`${today()}|${id}`] = nowIST(); ls.set("seen", seen);
-      addLog(`${nowIST()} allowed ${id}${manual ? " (typed)" : ""}`);
+      addLog(manual || !p.photo ? "warn" : "ok", `${p.name}${manual ? " · typed ID" : ""}`);
       return result(manual || !p.photo ? "warn" : "ok", "ALLOW", manual ? "Typed ID: check the face very carefully." : "Entry recorded.", p,
         p.photo ? "Match the face with the photo before letting them in." : "No photo on file: check their college ID card.", true);
-    case "used":     addLog(`${nowIST()} REFUSED used ${id}`); return result("bad", "ALREADY USED", `This pass entered today at ${r.time}, ${r.gate}.`, p, "Same pass twice, or a copy. Do not allow entry.");
-    case "blocked":  addLog(`${nowIST()} REFUSED blocked ${id}`); return result("bad", "BLOCKED PASS", r.note || "Blocked by the SYNERGY desk.", p, "Do not allow entry. Send to the SYNERGY desk.");
-    case "replaced": addLog(`${nowIST()} REFUSED old pass ${id}`); return result("bad", "OLD PASS", "This card was replaced by a new one (reported lost).", p, "Do not allow entry.");
+    case "used":     refused(); addLog("bad", `${p.name} · already used`); return result("bad", "ALREADY USED", `This pass entered today at ${r.time}, ${r.gate}.`, p, "Same pass twice, or a copy. Do not allow entry.");
+    case "blocked":  refused(); addLog("bad", `${p.name} · blocked`); return result("bad", "BLOCKED PASS", r.note || "Blocked by the SYNERGY desk.", p, "Do not allow entry. Send to the SYNERGY desk.");
+    case "replaced": refused(); addLog("bad", `${p.name} · old card`); return result("bad", "OLD PASS", "This card was replaced by a new one (reported lost).", p, "Do not allow entry.");
     case "manual_off": return result("bad", "TYPING IDs IS OFF", "The admin has switched off typed IDs.", p, "Ask them to show the QR pass.");
-    case "unknown":  return result("bad", "NOT ON LIST", "The server does not know this ID.", null, "Do not allow entry.");
-    default:         addLog(`${nowIST()} INVALID ${id}`); return result("bad", "INVALID PASS", "This QR was not issued by SYNERGY.", null, "Do not allow entry.");
+    case "unknown":  refused(); return result("bad", "NOT ON LIST", "The server does not know this ID.", null, "Do not allow entry.");
+    default:         refused(); addLog("bad", "Invalid pass"); return result("bad", "INVALID PASS", "This QR was not issued by SYNERGY.", null, "Do not allow entry.");
   }
 }
 
 /* ---------------- no internet */
 function offline(p, qr, manual) {
   if (!cfg.allowOffline) return result("bad", "NO CONNECTION", "Cannot check this pass with the other gates.", p, "Do not admit yet. Fix the internet, or send them to another gate.");
-  if (blocked.has(p.id)) return result("bad", "BLOCKED PASS", "Blocked by the SYNERGY desk.", p, "Do not allow entry.");
+  if (blocked.has(p.id)) { refused(); return result("bad", "BLOCKED PASS", "Blocked by the SYNERGY desk.", p, "Do not allow entry."); }
   const seen = ls.get("seen", {}), k = `${today()}|${p.id}`;
-  if (seen[k]) return result("bad", "ALREADY USED", `Already entered at this gate today at ${seen[k]}.`, p, "Do not allow entry.");
+  if (seen[k]) { refused(); return result("bad", "ALREADY USED", `Already entered at this gate today at ${seen[k]}.`, p, "Do not allow entry."); }
   seen[k] = nowIST(); ls.set("seen", seen);
   const q = ls.get("queue", []); q.push(manual ? { id: p.id } : { qr }); ls.set("queue", q);
-  addLog(`${nowIST()} allowed OFFLINE ${p.id}`);
+  addLog("warn", `${p.name} · offline`);
   return result("warn", "ALLOW (OFFLINE)", "No internet: checked on this phone only. Will sync.", p, "Check the face, and their college ID card.", false);
 }
 async function flush() {
   const q = ls.get("queue", []); if (!q.length || !link) return stats();
   const left = [];
   for (const e of q) {
-    try { const r = await api(link.u, { action: "gate.scan", code: link.c, ...e }, 8000); if (r.revoked) return wipe(r.error); if (!r.ok) left.push(e); else { setNet(true); if (r.status === "used") addLog(`Sync: ${r.id} had already entered at ${r.gate} (${r.time})`); } }
+    try { const r = await api(link.u, { action: "gate.scan", code: link.c, ...e }, 8000); if (r.revoked) return wipe(r.error); if (!r.ok) left.push(e); else { setNet(true); if (r.status === "used") addLog("bad", `Sync: ${r.id} had already entered at ${r.gate}`); } }
     catch { left.push(e); setNet(false); }
   }
   ls.set("queue", left); stats();
 }
 
-/* ---------------- status, heartbeat */
-function setNet(on) { $("net").className = `pill ${on ? "on" : "off"}`; $("net").textContent = on ? "Online" : "Offline"; }
+/* ---------------- status, counters, recent feed */
+function setNet(on) { $("net").className = `status ${on ? "on" : "off"}`; $("net").lastElementChild.textContent = on ? "Online" : "Offline"; }
+function refused() { const r = ls.get("refused", {}); r[today()] = (r[today()] || 0) + 1; ls.set("refused", r); }
 function stats() {
   const n = Object.keys(ls.get("seen", {})).filter(k => k.startsWith(today())).length, q = ls.get("queue", []).length;
-  $("countToday").textContent = `${n} admitted here today`; $("queue").textContent = q ? `${q} waiting to sync` : "";
+  $("countToday").textContent = n; $("refusedToday").textContent = ls.get("refused", {})[today()] || 0;
+  const f = ls.get("feed", []); $("lastScan").textContent = (f[0]?.t || "–").replace(/ ?([ap])m$/i, (_, x) => x.toUpperCase() + "M");
+  $("queue").textContent = q ? `⟳ ${q} entr${q === 1 ? "y" : "ies"} waiting to sync` : "";
 }
-function addLog(t) { const d = document.createElement("div"); d.textContent = t; $("log").prepend(d); }
+function addLog(kind, text) {
+  const f = ls.get("feed", []); f.unshift({ k: kind, x: text, t: nowIST() }); ls.set("feed", f.slice(0, 30)); renderFeed(); stats();
+}
+function renderFeed() {
+  const f = ls.get("feed", []);
+  $("log").innerHTML = f.length ? f.map(e => `<li class="${e.k}"><span class="dot"></span><span class="what">${esc(e.x)}</span><time>${esc(e.t)}</time></li>`).join("") : `<li class="empty">No scans yet</li>`;
+}
 $("manualGo").onclick = () => { const v = $("manual").value; if (v.trim()) { $("manual").value = ""; handle(v, true); } };
 $("manual").onkeydown = e => { if (e.key === "Enter") $("manualGo").click(); };
 setInterval(async () => {                      // every 30 s: settings, blocked list, gate still on?
