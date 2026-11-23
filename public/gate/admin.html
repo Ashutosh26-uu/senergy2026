@@ -69,7 +69,9 @@
 
     <div class="panel on" id="overview">
       <div class="grid">
+        <div class="card stat"><b id="sInside">0</b><span>inside right now</span></div>
         <div class="card stat"><b id="sToday">0</b><span>entries today</span></div>
+        <div class="card stat"><b id="sExits">0</b><span>exits today</span></div>
         <div class="card stat"><b id="sGates">0</b><span>gates switched on</span></div>
         <div class="card stat"><b id="sRoster">0</b><span>passes on the roster</span></div>
         <div class="card stat"><b id="sBlocked">0</b><span>blocked passes</span></div>
@@ -82,7 +84,10 @@
 
     <div class="panel" id="gates">
       <div class="card"><h2>Add a gate</h2>
-        <div class="row"><input id="gateName" placeholder="e.g. Gate 1, Main Gate, Back Gate"><button class="btn" id="gateAdd">Create gate</button></div>
+        <div class="row"><input id="gateName" placeholder="e.g. Gate 1, Main Gate, Back Gate">
+          <select id="gateType" style="padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:#0d0b16;color:var(--ink)"><option value="entry">Entry gate</option><option value="exit">Exit gate</option></select>
+          <button class="btn" id="gateAdd">Create gate</button></div>
+        <p class="small muted"><b>Entry gates</b> let a pass in only if it is outside. <b>Exit gates</b> let a pass out only if it is inside. So a card can never be used twice in a row, and a student who goes out (exit scan) can come back in.</p>
         <p class="small muted">Each gate gets a secret code, shown once as a QR. Scan it with the guard's phone at <b id="gateUrl"></b>. Switching a gate off locks that phone at once and erases the student data on it.</p>
       </div>
       <div class="card"><table id="gateTable"></table></div>
@@ -91,7 +96,7 @@
     <div class="panel" id="passes">
       <div class="card"><h2>Find a pass</h2>
         <div class="row"><input id="q" placeholder="ID or name"><button class="btn" id="find">Search</button></div>
-        <p class="small muted"><b>Block</b>: lost card, misuse, or wrong person; it is refused at every gate. <b>Allow re-entry</b>: clears today's entry so they can come in once more. For a <b>lost card</b>, block it, then re-issue a new card with the pass maker (<code>--reissue ID</code>) and import the new roster: the old card then shows "OLD PASS".</p>
+        <p class="small muted"><b>Block</b>: lost card, misuse, or wrong person; it is refused at every gate. <b>Mark outside</b>: for someone who left without an exit scan; their card can then enter once more. For a <b>lost card</b>, block it, then re-issue a new card with the pass maker (<code>--reissue ID</code>) and import the new roster: the old card then shows "OLD PASS".</p>
       </div>
       <div class="card"><table id="passTable"><tr><td class="muted">Search above.</td></tr></table></div>
     </div>
@@ -111,7 +116,7 @@
 
     <div class="panel" id="settings">
       <div class="card" style="display:grid;gap:16px">
-        <label class="switch"><input type="checkbox" id="optOffline"><span><b>Allow entry when a gate has no internet</b><br><span class="small muted">Off (safest): a gate without internet refuses everyone until it reconnects, so no pass can be used twice at different gates. On: the gate admits on its own check and syncs later; the same pass could slip in once more at another offline gate.</span></span></label>
+        <p class="small muted"><b>No offline entry.</b> A gate without internet lets nobody through, so a pass can never be used twice at two gates.</p>
         <label class="switch"><input type="checkbox" id="optManual"><span><b>Allow typing an ID for damaged cards</b><br><span class="small muted">The guard still sees the photo, and the entry is marked "typed ID". Turn off if typed IDs are being misused.</span></span></label>
         <p class="small muted">The admin password is changed in the Google Sheet: SYNERGY menu → Set admin password. That also signs everyone out.</p>
       </div>
@@ -167,7 +172,7 @@ async function refresh() {
   if (!session) return;
   let d; try { d = await call("admin.dashboard"); } catch { return; }
   if (!d.ok) return;
-  $("sToday").textContent = d.entriesToday; $("sRoster").textContent = d.rosterSize; $("sBlocked").textContent = d.blocked;
+  $("sToday").textContent = d.entriesToday; $("sInside").textContent = d.insideNow ?? 0; $("sExits").textContent = d.exitsToday ?? 0; $("sRoster").textContent = d.rosterSize; $("sBlocked").textContent = d.blocked;
   $("sGates").textContent = d.gates.filter(g => g.active).length;
   const warn = [];
   if (!d.rosterSize) warn.push("Import the roster (Student data → 1). Until then every pass shows NOT ON LIST.");
@@ -175,16 +180,16 @@ async function refresh() {
   if (!d.gates.length) warn.push("Create your gates (Gates tab).");
   $("setupWarn").hidden = !warn.length; $("setupWarn").innerHTML = "<b>To finish setting up:</b><br>" + warn.map(esc).join("<br>");
   table("perGate", ["Gate", "Entries today"], Object.entries(d.perGate).map(([g, n]) => `<tr><td>${esc(g)}</td><td>${n}</td></tr>`));
-  table("recent", ["Time", "Day", "ID", "Name", "Gate", "How"], d.recent.map(r => `<tr><td>${esc(r.time)}</td><td>${esc(r.day)}</td><td>${esc(r.id)}</td><td>${esc(r.name)}</td><td>${esc(r.gate)}</td><td>${esc(r.method)}</td></tr>`));
+  table("recent", ["Time", "Day", "ID", "Name", "Gate", "How"], d.recent.map(r => `<tr><td>${r.dir === "OUT" ? "⬅" : "➡"} ${esc(r.time)}</td><td>${esc(r.day)}</td><td>${esc(r.id)}</td><td>${esc(r.name)}</td><td>${esc(r.gate)}</td><td>${esc(r.method)}</td></tr>`));
   table("log", ["Time", "Who", "What", "Detail"], d.log.map(r => `<tr><td>${esc(r.time)}</td><td>${esc(r.who)}</td><td>${esc(r.action)}</td><td>${esc(r.detail)}</td></tr>`));
-  $("optOffline").checked = d.config.allowOffline; $("optManual").checked = d.config.allowManual;
+  $("optManual").checked = d.config.allowManual;
   drawGates(d.gates);
   $("updated").textContent = "Updated " + new Date().toLocaleTimeString();
 }
 
 /* gates */
 function drawGates(gates) {
-  table("gateTable", ["Gate", "Status", "Last seen", ""], gates.map(g => `<tr><td><b>${esc(g.name)}</b></td>
+  table("gateTable", ["Gate", "Status", "Last seen", ""], gates.map(g => `<tr><td><b>${esc(g.name)}</b><br><span class="small muted">${g.type === "exit" ? "Exit gate" : "Entry gate"}</span></td>
     <td><span class="tag ${g.active ? "on" : "off"}">${g.active ? "On" : "Off"}</span></td><td class="small">${esc(g.lastSeen || "never")}</td>
     <td class="row"><button class="btn ghost" data-act="toggle" data-id="${esc(g.id)}" data-on="${g.active}">${g.active ? "Switch off" : "Switch on"}</button>
     <button class="btn ghost" data-act="code" data-id="${esc(g.id)}" data-name="${esc(g.name)}">New code</button>
@@ -200,7 +205,7 @@ function showCode(name, code) {
 $("mClose").onclick = () => { $("modal").classList.remove("on"); $("mCode").textContent = ""; $("mQR").innerHTML = ""; $("mCopy").textContent = "Copy code"; };
 $("gateAdd").onclick = async () => {
   const name = $("gateName").value.trim(); if (!name) return;
-  const r = await call("admin.gateCreate", { name }); if (!r.ok) return alert(r.error);
+  const r = await call("admin.gateCreate", { name, type: $("gateType").value }); if (!r.ok) return alert(r.error);
   $("gateName").value = ""; showCode(r.gate.name, r.code); refresh();
 };
 $("gateTable").onclick = async e => {
@@ -216,9 +221,9 @@ async function find() {
   const r = await call("admin.passFind", { q: $("q").value }); if (!r.ok) return alert(r.error);
   table("passTable", ["Pass", "Status", "Entries", ""], r.passes.map(p => `<tr><td><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.id)} · course ${esc(p.course)} · v${esc(p.version)}</span></td>
     <td><span class="tag ${p.status === "blocked" ? "off" : "on"}">${p.status === "blocked" ? "Blocked" : "Active"}</span>${p.note ? `<br><span class="small muted">${esc(p.note)}</span>` : ""}</td>
-    <td class="small">${p.entries.map(e => `${esc(e.day)} ${esc(e.time)} · ${esc(e.gate)}${e.method === "typed ID" ? " (typed)" : ""}`).join("<br>") || "none"}</td>
+    <td class="small">${p.entries.map(e => `${e.dir === "OUT" ? "⬅ out" : "➡ in"} ${esc(e.day)} ${esc(e.time)} · ${esc(e.gate)}${e.method === "typed ID" ? " (typed)" : ""}`).join("<br>") || "none"}</td>
     <td class="row">${p.status === "blocked" ? `<button class="btn ghost" data-act="unblock" data-id="${esc(p.id)}">Unblock</button>` : `<button class="btn danger" data-act="block" data-id="${esc(p.id)}">Block</button>`}
-    <button class="btn ghost" data-act="readmit" data-id="${esc(p.id)}">Allow re-entry</button></td></tr>`));
+    <button class="btn ghost" data-act="readmit" data-id="${esc(p.id)}">Mark outside</button></td></tr>`));
 }
 $("find").onclick = find; $("q").onkeydown = e => { if (e.key === "Enter") find(); };
 $("passTable").onclick = async e => {
@@ -226,7 +231,7 @@ $("passTable").onclick = async e => {
   const id = b.dataset.id; let r;
   if (b.dataset.act === "block") { const note = prompt("Reason (e.g. lost card, misuse):", "lost card"); if (note === null) return; r = await call("admin.passBlock", { id, note }); }
   if (b.dataset.act === "unblock") r = await call("admin.passUnblock", { id });
-  if (b.dataset.act === "readmit") { const note = prompt("Why may they enter again today?", "went out and came back"); if (note === null) return; r = await call("admin.passReadmit", { id, note }); }
+  if (b.dataset.act === "readmit") { const note = prompt("Mark this pass as outside? Reason:", "left without an exit scan"); if (note === null) return; r = await call("admin.passReadmit", { id, note }); }
   if (r && !r.ok) alert(r.error);
   find(); refresh();
 };
@@ -249,7 +254,6 @@ $("packGo").onclick = async () => {
 };
 
 /* settings */
-$("optOffline").onchange = e => call("admin.config", { allowOffline: e.target.checked });
 $("optManual").onchange = e => call("admin.config", { allowManual: e.target.checked });
 
 function start() { $("login").hidden = true; $("app").hidden = false; $("gateUrl").textContent = gatePage; refresh(); }

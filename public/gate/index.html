@@ -78,6 +78,11 @@
   .stat b { display:block; font-size:1.55rem; font-weight:900; font-variant-numeric:tabular-nums; line-height:1.1; }
   .stat span { color:var(--muted); font-size:.74rem; }
   .stat.ok b { color:var(--ok); } .stat.bad b { color:#ff8a9c; }
+  .mode { padding:3px 9px; border-radius:999px; font-size:.68rem; font-weight:900; letter-spacing:.12em; background:var(--grad); color:#fff; }
+  body.exit .mode { background:linear-gradient(110deg,#ff9b2e,#ff5a3c); }
+  body.exit .cam .box i { filter:drop-shadow(0 0 6px rgba(255,155,46,.95)); }
+  body.exit .cam .laser { background:linear-gradient(90deg,#ff9b2e,#ff5a3c); box-shadow:0 0 18px 3px rgba(255,140,46,.6); }
+  .result.out { background:radial-gradient(120% 80% at 50% 0%,#a85a0c,#2a1505 70%); }
   #lastScan { font-size:1.1rem; white-space:nowrap; padding-top:.3rem; }
   .sync { text-align:center; font-size:.82rem; color:var(--warn); margin:-4px 0 0; }
 
@@ -183,7 +188,7 @@
 <!-- 3. scanning -->
 <section class="screen" id="scan">
   <div class="top">
-    <div class="brand"><img src="../assets/img/synergy-2026.svg" alt=""><div class="t"><small>Entry gate</small><b id="gateName"></b></div></div>
+    <div class="brand"><img src="../assets/img/synergy-2026.svg" alt=""><div class="t"><small><span class="mode" id="modeTag">ENTRY</span></small><b id="gateName"></b></div></div>
     <span class="status" id="net"><i></i><span>…</span></span>
   </div>
   <div class="cam" id="camBox">
@@ -196,7 +201,7 @@
     <div class="tip" id="camTip">Hold the pass QR inside the frame</div>
   </div>
   <div class="stats">
-    <div class="glass stat ok"><b id="countToday">0</b><span>admitted today</span></div>
+    <div class="glass stat ok"><b id="countToday">0</b><span id="countLabel">admitted today</span></div>
     <div class="glass stat bad"><b id="refusedToday">0</b><span>refused today</span></div>
     <div class="glass stat"><b id="lastScan">–</b><span>last scan</span></div>
   </div>
@@ -242,7 +247,7 @@ const nowIST = () => new Date().toLocaleTimeString("en-IN", { hour: "numeric", m
 const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
 
 let link = ls.get("link", null);              // { u: server URL, c: gate code, n: gate name }
-let roster = null, cfg = { allowOffline: false, allowManual: true }, blocked = new Set();
+let roster = null, cfg = { allowManual: true }, blocked = new Set();
 let setupCam = null, cam = null;
 
 /* ---------------- sound: short tones made on the phone (no files) */
@@ -273,6 +278,15 @@ function setupTorch() {
   $("torchBtn").onclick = async () => { on = !on; try { await track.applyConstraints({ advanced: [{ torch: on }] }); $("torchBtn").setAttribute("aria-pressed", on); } catch { on = !on; } };
 }
 
+/* ---------------- entry or exit gate */
+const isExit = () => ls.get("gateType", "entry") === "exit";
+function applyMode() {
+  document.body.classList.toggle("exit", isExit());
+  $("modeTag").textContent = isExit() ? "EXIT" : "ENTRY";
+  $("countLabel").textContent = isExit() ? "let out today" : "admitted today";
+  $("camTip").textContent = isExit() ? "Leaving? Scan the pass to go out" : "Hold the pass QR inside the frame";
+}
+
 /* ---------------- setup */
 async function connect(code) {
   const o = readSetup(code);
@@ -290,7 +304,8 @@ async function hello() {
   if (r.revoked) { await wipe(r.error); return null; }
   if (!r.ok) throw new Error(r.error);
   cfg = r.config; blocked = new Set(r.blocked || []);
-  ls.set("cfg", cfg); ls.set("blocked", [...blocked]); ls.set("gateName", r.gate);
+  ls.set("cfg", cfg); ls.set("blocked", [...blocked]); ls.set("gateName", r.gate); ls.set("gateType", r.type || "entry");
+  applyMode();
   return r;
 }
 async function boot() {
@@ -319,7 +334,7 @@ async function boot() {
     roster = {}; for (const [id, name, course, photo] of pack.students) roster[id] = { id, name, course, photo };
     await store.set("roster", roster); await store.set("packKey", h.packKey);
   }
-  $("gateName").textContent = ls.get("gateName", link.n || "Gate");
+  $("gateName").textContent = ls.get("gateName", link.n || "Gate"); applyMode();
   $("manualRow").hidden = !cfg.allowManual;
   setNet(!!h); stats(); renderFeed(); show("scan");
   cam = new QRCamera($("video"), t => handle(t, false));
@@ -330,7 +345,7 @@ async function boot() {
 /* ---------------- gate switched off / code replaced: erase everything */
 async function wipe(why) {
   cam?.stop(); await store.clear();
-  ["cfg", "blocked", "gateName", "queue", "seen", "feed"].forEach(ls.del);
+  ["cfg", "blocked", "gateName", "gateType", "queue", "seen", "feed"].forEach(ls.del);
   $("lockedWhy").textContent = (why || "This gate is no longer active.") + " Student data on this phone has been erased.";
   show("locked");
 }
@@ -340,6 +355,7 @@ const ICON = {
   ok: '<svg viewBox="0 0 48 48"><path d="M12 25l8 8 16-18"/></svg>',
   warn: '<svg viewBox="0 0 48 48"><path d="M24 12v15M24 35v.5"/></svg>',
   bad: '<svg viewBox="0 0 48 48"><path d="M15 15l18 18M33 15L15 33"/></svg>',
+  out: '<svg viewBox="0 0 48 48"><path d="M14 24h20M26 15l9 9-9 9"/></svg>',
   busy: "",
 };
 let current = null, autoTimer = 0, held = false;
@@ -355,11 +371,11 @@ function result(kind, verdict, why, p, hint, canFlag) {
   $("flag").hidden = !canFlag;
   $("next").hidden = kind === "busy";
   // a clean ALLOW moves on by itself after a few seconds; refusals and warnings always wait for the guard
-  const auto = kind === "ok";
+  const auto = kind === "ok" || kind === "out";
   $("auto").hidden = $("autoNote").hidden = !auto;
   $("auto").classList.remove("run"); void $("auto").offsetWidth;
   if (auto) { $("auto").style.setProperty("--t", "6s"); $("auto").classList.add("run"); autoTimer = setTimeout(() => { if (!held) $("next").click(); }, 6000); }
-  if (kind !== "busy") { navigator.vibrate?.(kind === "ok" ? 80 : [220, 80, 220]); tone(kind); }
+  if (kind !== "busy") { navigator.vibrate?.(kind === "ok" || kind === "out" ? 80 : [220, 80, 220]); tone(kind === "out" ? "ok" : kind); }
   if (cam) { cam.paused = true; $("camBox").classList.add("paused"); }
 }
 $("who").onclick = () => { if (!$("auto").hidden && !held) { held = true; clearTimeout(autoTimer); $("auto").classList.remove("run"); $("autoNote").textContent = "Held · tap Next scan when done"; } };
@@ -394,17 +410,24 @@ async function handle(text, manual) {
   result("busy", "Checking…", "", p, "");
   let r;
   try { r = await api(link.u, manual ? { action: "gate.scan", code: link.c, id } : { action: "gate.scan", code: link.c, qr }, 8000); setNet(true); }
-  catch { setNet(false); return offline(p, qr, manual); }
+  catch { setNet(false); return offline(p); }
   if (r.revoked) return wipe(r.error);
   if (!r.ok) return result("bad", "ERROR", r.error, p, "Try again, or send to the SYNERGY desk.");
   const seen = ls.get("seen", {});
   switch (r.status) {
     case "admitted":
-      seen[`${today()}|${id}`] = nowIST(); ls.set("seen", seen);
-      addLog(manual || !p.photo ? "warn" : "ok", `${p.name}${manual ? " · typed ID" : ""}`);
-      return result(manual || !p.photo ? "warn" : "ok", "ALLOW", manual ? "Typed ID: check the face very carefully." : "Entry recorded.", p,
+      seen[`${today()}|${id}|${r.entries || 1}`] = nowIST(); ls.set("seen", seen);
+      addLog(manual || !p.photo ? "warn" : "ok", `${p.name}${r.reentry ? " · re-entry" : ""}${manual ? " · typed ID" : ""}`);
+      return result(manual || !p.photo ? "warn" : "ok", r.reentry ? "WELCOME BACK" : "ALLOW",
+        manual ? "Typed ID: check the face very carefully." : r.reentry ? `Re-entry recorded (entry ${r.entries} today).` : "Entry recorded.", p,
         p.photo ? "Match the face with the photo before letting them in." : "No photo on file: check their college ID card.", true);
-    case "used":     refused(); addLog("bad", `${p.name} · already used`); return result("bad", "ALREADY USED", `This pass entered today at ${r.time}, ${r.gate}.`, p, "Same pass twice, or a copy. Do not allow entry.");
+    case "exited":
+      seen[`${today()}|${id}|out|${Date.now()}`] = nowIST(); ls.set("seen", seen);
+      addLog("ok", `${p.name} · went out`);
+      return result("out", "EXIT RECORDED", `Left at ${r.time}. They can come back in through an entry gate.`, p, "Check the face: the card leaves with its owner.", true);
+    case "not_inside": refused(); addLog("bad", `${p.name} · not inside`);
+      return result("bad", "NOT INSIDE", r.time ? `This pass is already outside (left at ${r.time}, ${r.gate}).` : "This pass has not entered today.", p, "Someone else may be using this card. Do not let it through. Send to the SYNERGY desk.");
+    case "used":     refused(); addLog("bad", `${p.name} · already inside`); return result("bad", "ALREADY INSIDE", `This pass came in today at ${r.time}, ${r.gate}, and has not gone out.`, p, "Same card twice, a copy, or a card passed outside. Do not allow entry.");
     case "blocked":  refused(); addLog("bad", `${p.name} · blocked`); return result("bad", "BLOCKED PASS", r.note || "Blocked by the SYNERGY desk.", p, "Do not allow entry. Send to the SYNERGY desk.");
     case "replaced": refused(); addLog("bad", `${p.name} · old card`); return result("bad", "OLD PASS", "This card was replaced by a new one (reported lost).", p, "Do not allow entry.");
     case "manual_off": return result("bad", "TYPING IDs IS OFF", "The admin has switched off typed IDs.", p, "Ask them to show the QR pass.");
@@ -413,32 +436,18 @@ async function handle(text, manual) {
   }
 }
 
-/* ---------------- no internet */
-function offline(p, qr, manual) {
-  if (!cfg.allowOffline) return result("bad", "NO CONNECTION", "Cannot check this pass with the other gates.", p, "Do not admit yet. Fix the internet, or send them to another gate.");
-  if (blocked.has(p.id)) { refused(); return result("bad", "BLOCKED PASS", "Blocked by the SYNERGY desk.", p, "Do not allow entry."); }
-  const seen = ls.get("seen", {}), k = `${today()}|${p.id}`;
-  if (seen[k]) { refused(); return result("bad", "ALREADY USED", `Already entered at this gate today at ${seen[k]}.`, p, "Do not allow entry."); }
-  seen[k] = nowIST(); ls.set("seen", seen);
-  const q = ls.get("queue", []); q.push(manual ? { id: p.id } : { qr }); ls.set("queue", q);
-  addLog("warn", `${p.name} · offline`);
-  return result("warn", "ALLOW (OFFLINE)", "No internet: checked on this phone only. Will sync.", p, "Check the face, and their college ID card.", false);
+/* ---------------- no internet: nobody gets through without the server (no duplicate is possible) */
+function offline(p) {
+  return result("bad", "NO CONNECTION", "This gate cannot reach the server, so the pass cannot be checked.", p, "Do not let them through. Wait for the connection, or send them to another gate.");
 }
-async function flush() {
-  const q = ls.get("queue", []); if (!q.length || !link) return stats();
-  const left = [];
-  for (const e of q) {
-    try { const r = await api(link.u, { action: "gate.scan", code: link.c, ...e }, 8000); if (r.revoked) return wipe(r.error); if (!r.ok) left.push(e); else { setNet(true); if (r.status === "used") addLog("bad", `Sync: ${r.id} had already entered at ${r.gate}`); } }
-    catch { left.push(e); setNet(false); }
-  }
-  ls.set("queue", left); stats();
-}
+function flush() { ls.del("queue"); stats(); }
 
 /* ---------------- status, counters, recent feed */
 function setNet(on) { $("net").className = `status ${on ? "on" : "off"}`; $("net").lastElementChild.textContent = on ? "Online" : "Offline"; }
 function refused() { const r = ls.get("refused", {}); r[today()] = (r[today()] || 0) + 1; ls.set("refused", r); }
 function stats() {
-  const n = Object.keys(ls.get("seen", {})).filter(k => k.startsWith(today())).length, q = ls.get("queue", []).length;
+  const keys = Object.keys(ls.get("seen", {})).filter(k => k.startsWith(today())), q = 0;
+  const n = keys.filter(k => isExit() ? k.includes("|out|") : !k.includes("|out|")).length;
   $("countToday").textContent = n; $("refusedToday").textContent = ls.get("refused", {})[today()] || 0;
   const f = ls.get("feed", []); $("lastScan").textContent = (f[0]?.t || "–").replace(/ ?([ap])m$/i, (_, x) => x.toUpperCase() + "M");
   $("queue").textContent = q ? `⟳ ${q} entr${q === 1 ? "y" : "ies"} waiting to sync` : "";
