@@ -209,6 +209,10 @@ export function Footer() {
         <nav className="foot-links" aria-label="Footer">
           <a href="#events">SYNERGY 2026</a><a href="#starnight">Star Night</a><a href="#archive">Past years</a><a href="#venue">Venue</a><a href="#contact">Contact</a>
         </nav>
+        <nav className="foot-links foot-staff" aria-label="For the SYNERGY team">
+          <a href={`${import.meta.env.BASE_URL}gate/admin.html`} target="_blank" rel="noopener">Admin dashboard</a>
+          <a href={`${import.meta.env.BASE_URL}gate/`} target="_blank" rel="noopener">Gate scanner</a>
+        </nav>
       </div>
       <div className="foot-bottom">
         <p className="muted">Photos, flyers and videos: United University, Prayagraj</p>

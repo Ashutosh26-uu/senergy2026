@@ -788,3 +788,5 @@ section[id], .ev26 { scroll-margin-top: 90px; }
 .pass-form .check input { width: 18px; }
 .pass-modal { overflow-x: hidden; }
 @media (max-width: 520px) { .pass-modal { padding: 24px 16px 18px; } }
+.foot-staff a { padding: 6px 14px !important; border: 1px solid var(--line); border-radius: 999px; font-size: .85rem; }
+.foot-staff a:hover { border-color: var(--cyan); }
