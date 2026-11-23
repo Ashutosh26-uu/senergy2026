@@ -784,3 +784,7 @@ section[id], .ev26 { scroll-margin-top: 90px; }
   .pass-done img { max-width: 260px; }
   .pass-fab { left: 12px; bottom: 12px; padding: 11px 15px; font-size: .85rem; }
 }
+.pass-form label, .pass-form input { min-width: 0; width: 100%; }
+.pass-form .check input { width: 18px; }
+.pass-modal { overflow-x: hidden; }
+@media (max-width: 520px) { .pass-modal { padding: 24px 16px 18px; } }

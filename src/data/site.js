@@ -9,7 +9,7 @@ export const FEST = {
 };
 
 // relative asset path: works on localhost and under /senergy2026/ on GitHub Pages
-export const A = path => `assets/${path}`;
+export const A = path => `${import.meta.env.BASE_URL}assets/${path}`;
 
 // gate server (Google Apps Script web app): students download their own pass from it
 export const PASS_SERVER = import.meta.env.VITE_PASS_SERVER || "https://script.google.com/macros/s/AKfycbzWIFzj2mr0aExRf6cgs_SWCBz5y1MabjsmO4-T8L-EFk8eWC10CrSA6giBxqIWMloN0A/exec";

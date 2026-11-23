@@ -18,7 +18,7 @@ function loadQR() {   // the same QR library the gate pages use, loaded only whe
   if (!qrLib) qrLib = new Promise((ok, fail) => {
     if (window.qrcode) return ok(window.qrcode);
     const s = document.createElement("script");
-    s.src = "gate/vendor/qrcode.js"; s.onload = () => ok(window.qrcode); s.onerror = () => { qrLib = null; fail(new Error("Could not load the QR maker.")); };
+    s.src = `${import.meta.env.BASE_URL}gate/vendor/qrcode.js`; s.onload = () => ok(window.qrcode); s.onerror = () => { qrLib = null; fail(new Error("Could not load the QR maker.")); };
     document.head.appendChild(s);
   });
   return qrLib;
