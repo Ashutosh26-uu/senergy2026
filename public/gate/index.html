@@ -79,6 +79,8 @@
   .stat span { color:var(--muted); font-size:.74rem; }
   .stat.ok b { color:var(--ok); } .stat.bad b { color:#ff8a9c; }
   .mode { padding:3px 9px; border-radius:999px; font-size:.68rem; font-weight:900; letter-spacing:.12em; background:var(--grad); color:#fff; }
+  .closedBar { display:none; position:fixed; left:0; right:0; top:0; z-index:60; padding:10px 14px; text-align:center; font-weight:900; letter-spacing:.06em; color:#fff; background:#c8102e; box-shadow:0 6px 24px rgba(200,16,46,.5); }
+  body.closed .closedBar { display:block; }
   body.exit .mode { background:linear-gradient(110deg,#ff9b2e,#ff5a3c); }
   body.exit .cam .box i { filter:drop-shadow(0 0 6px rgba(255,155,46,.95)); }
   body.exit .cam .laser { background:linear-gradient(90deg,#ff9b2e,#ff5a3c); box-shadow:0 0 18px 3px rgba(255,140,46,.6); }
@@ -307,6 +309,8 @@ async function hello() {
   if (!r.ok) throw new Error(r.error);
   cfg = r.config; blocked = new Set(r.blocked || []);
   ls.set("cfg", cfg); ls.set("blocked", [...blocked]); ls.set("gateName", r.gate); ls.set("gateType", r.type || "entry"); ls.set("gateZone", r.zone || "campus");
+  if (!document.querySelector(".closedBar")) { const b = document.createElement("div"); b.className = "closedBar"; b.textContent = "⛔ GATE CLOSED BY ADMIN · nobody can pass here"; document.body.prepend(b); }
+  document.body.classList.toggle("closed", r.open === false);
   applyMode();
   return r;
 }
@@ -434,6 +438,8 @@ async function handle(text, manual) {
       return result("bad", "CAMPUS FIRST", "This pass has not checked in at a university gate today.", p, "Send them to scan in at a campus gate first. A card that skipped the campus gate may be a copy or came over the wall.");
     case "blocked":  refused(); addLog("bad", `${p.name} · blocked`); return result("bad", "BLOCKED PASS", r.note || "Blocked by the SYNERGY desk.", p, "Do not allow entry. Send to the SYNERGY desk.");
     case "replaced": refused(); addLog("bad", `${p.name} · old card`); return result("bad", "OLD PASS", "This card was replaced by a new one (reported lost).", p, "Do not allow entry.");
+    case "closed": refused(); addLog("bad", `${p.name} · gate closed`); document.body.classList.add("closed");
+      return result("bad", "GATE CLOSED", "The admin has closed entry at this gate.", p, "Do not let anyone through here. Send them to another open gate.");
     case "manual_off": return result("bad", "TYPING IDs IS OFF", "The admin has switched off typed IDs.", p, "Ask them to show the QR pass.");
     case "unknown":  refused(); return result("bad", "NOT ON LIST", "The server does not know this ID.", null, "Do not allow entry.");
     default:         refused(); addLog("bad", "Invalid pass"); return result("bad", "INVALID PASS", "This QR was not issued by SYNERGY.", null, "Do not allow entry.");

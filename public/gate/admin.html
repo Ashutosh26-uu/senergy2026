@@ -35,6 +35,11 @@
   table { width: 100%; border-collapse: collapse; font-size: .88rem; } th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
   th { color: var(--muted); font-weight: 600; }
   .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .75rem; font-weight: 700; }
+  .gctl { display: grid; gap: 10px; }
+  .gctl .g { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: #0d0b16; }
+  .gctl .g.closed { border-color: rgba(255,59,78,.6); background: rgba(255,59,78,.08); }
+  .gctl .g b { display: block; } .gctl .g small { color: var(--muted, #a9a3c2); }
+  .btn.ok { background: #0f4f33; border: 1px solid var(--ok); }
   .tag.on { background: rgba(22,193,114,.18); color: var(--ok); } .tag.off { background: rgba(255,59,78,.18); color: var(--bad); }
   .panel { display: none; flex-direction: column; gap: 14px; } .panel.on { display: flex; }
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: none; place-items: center; padding: 16px; z-index: 5; }
@@ -83,6 +88,10 @@
         <div class="card stat"><b id="sDownloads">0</b><span>passes downloaded online</span></div>
       </div>
       <div class="card" id="setupWarn" hidden></div>
+      <div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Gates right now</h2>
+        <div class="row"><button class="btn danger" id="closeAll">Close all gates</button><button class="btn ok" id="openAll">Open all gates</button></div></div>
+        <p class="small muted">Tap a gate to close or open entry there. A closed gate's phone shows <b>GATE CLOSED</b> and lets nobody through; open it again any time, no new setup needed.</p>
+        <div class="gctl" id="gateCtl"></div></div>
       <div class="card"><h2>Today by gate</h2><table id="perGate"></table></div>
       <div class="card"><h2>Latest entries</h2><table id="recent"></table></div>
       <div class="card"><h2>Activity log</h2><table id="log"></table></div>
@@ -192,15 +201,16 @@ async function refresh() {
   table("recent", ["Time", "Day", "ID", "Name", "Gate", "How"], d.recent.map(r => `<tr><td>${r.dir === "OUT" ? "⬅" : "➡"} ${esc(r.time)}</td><td>${esc(r.day)}</td><td>${esc(r.id)}</td><td>${esc(r.name)}</td><td>${esc(r.gate)}</td><td>${esc(r.method)}</td></tr>`));
   table("log", ["Time", "Who", "What", "Detail"], d.log.map(r => `<tr><td>${esc(r.time)}</td><td>${esc(r.who)}</td><td>${esc(r.action)}</td><td>${esc(r.detail)}</td></tr>`));
   $("optManual").checked = d.config.allowManual; $("optCampus").checked = d.config.requireCampus !== false;
-  drawGates(d.gates);
+  drawGates(d.gates); drawCtl(d.gates);
   $("updated").textContent = "Updated " + new Date().toLocaleTimeString();
 }
 
 /* gates */
 function drawGates(gates) {
   table("gateTable", ["Gate", "Status", "Last seen", ""], gates.map(g => `<tr><td><b>${esc(g.name)}</b><br><span class="small muted">${g.zone === "venue" ? "Fest venue" : "Campus"} · ${g.type === "exit" ? "Exit gate" : "Entry gate"}</span></td>
-    <td><span class="tag ${g.active ? "on" : "off"}">${g.active ? "On" : "Off"}</span></td><td class="small">${esc(g.lastSeen || "never")}</td>
-    <td class="row"><button class="btn ghost" data-act="toggle" data-id="${esc(g.id)}" data-on="${g.active}">${g.active ? "Switch off" : "Switch on"}</button>
+    <td><span class="tag ${g.active ? "on" : "off"}">${g.active ? "Set up" : "Switched off"}</span><br><span class="tag ${g.open ? "on" : "off"}" style="margin-top:4px">${g.open ? "Entry open" : "Entry closed"}</span></td><td class="small">${esc(g.lastSeen || "never")}</td>
+    <td class="row"><button class="btn ${g.open ? "danger" : "ok"}" data-act="open" data-id="${esc(g.id)}" data-open="${g.open}">${g.open ? "Close entry" : "Open entry"}</button>
+    <button class="btn ghost" data-act="toggle" data-id="${esc(g.id)}" data-on="${g.active}">${g.active ? "Switch off" : "Switch on"}</button>
     <button class="btn ghost" data-act="code" data-id="${esc(g.id)}" data-name="${esc(g.name)}">New code</button>
     <button class="btn danger" data-act="del" data-id="${esc(g.id)}" data-name="${esc(g.name)}">Delete</button></td></tr>`));
 }
@@ -219,11 +229,23 @@ $("gateAdd").onclick = async () => {
 };
 $("gateTable").onclick = async e => {
   const b = e.target.closest("button[data-act]"); if (!b) return;
-  if (b.dataset.act === "toggle") { await call("admin.gateActive", { id: b.dataset.id, active: b.dataset.on !== "true" }); }
+  if (b.dataset.act === "open") { await call("admin.gateOpen", { id: b.dataset.id, open: b.dataset.open !== "true" }); }
+  if (b.dataset.act === "toggle" && (b.dataset.on !== "true" || confirm("Switch off this gate? Its phone is locked and its data erased; it must scan a new gate QR to work again. To just stop entry for a while, use Close entry instead."))) { await call("admin.gateActive", { id: b.dataset.id, active: b.dataset.on !== "true" }); }
   if (b.dataset.act === "code" && confirm(`Replace ${b.dataset.name}'s code? The phone using the old code is locked out.`)) { const r = await call("admin.gateNewCode", { id: b.dataset.id }); if (r.ok) showCode(b.dataset.name, r.code); }
   if (b.dataset.act === "del" && confirm(`Delete ${b.dataset.name}? Its phone is locked out. Past entries stay in the sheet.`)) { await call("admin.gateDelete", { id: b.dataset.id }); }
   refresh();
 };
+
+function drawCtl(gates) {
+  $("gateCtl").innerHTML = gates.length ? gates.map(g => `<div class="g ${g.open ? "" : "closed"}"><span><b>${esc(g.name)}</b><small>${g.zone === "venue" ? "Fest venue" : "Campus"} · ${g.type === "exit" ? "exit" : "entry"} · ${g.open ? "open" : "CLOSED"}${g.active ? "" : " · switched off"}</small></span>
+    <button class="btn ${g.open ? "danger" : "ok"}" data-id="${esc(g.id)}" data-open="${g.open}">${g.open ? "Close" : "Open"}</button></div>`).join("") : '<p class="small muted">No gates yet. Create them in the Gates tab.</p>';
+}
+$("gateCtl").onclick = async e => {
+  const b = e.target.closest("button[data-id]"); if (!b) return;
+  b.disabled = true; await call("admin.gateOpen", { id: b.dataset.id, open: b.dataset.open !== "true" }); refresh();
+};
+$("closeAll").onclick = async () => { if (!confirm("Close entry at ALL gates? Nobody can enter anywhere until you open them again.")) return; await call("admin.gatesOpenAll", { open: false }); refresh(); };
+$("openAll").onclick = async () => { await call("admin.gatesOpenAll", { open: true }); refresh(); };
 
 /* passes */
 async function find() {
