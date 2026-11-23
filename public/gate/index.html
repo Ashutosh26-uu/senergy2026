@@ -280,9 +280,11 @@ function setupTorch() {
 
 /* ---------------- entry or exit gate */
 const isExit = () => ls.get("gateType", "entry") === "exit";
+const isVenue = () => ls.get("gateZone", "campus") === "venue";
+const place = () => isVenue() ? "the venue" : "the campus";
 function applyMode() {
   document.body.classList.toggle("exit", isExit());
-  $("modeTag").textContent = isExit() ? "EXIT" : "ENTRY";
+  $("modeTag").textContent = (isVenue() ? "VENUE " : "CAMPUS ") + (isExit() ? "EXIT" : "ENTRY");
   $("countLabel").textContent = isExit() ? "let out today" : "admitted today";
   $("camTip").textContent = isExit() ? "Leaving? Scan the pass to go out" : "Hold the pass QR inside the frame";
 }
@@ -304,7 +306,7 @@ async function hello() {
   if (r.revoked) { await wipe(r.error); return null; }
   if (!r.ok) throw new Error(r.error);
   cfg = r.config; blocked = new Set(r.blocked || []);
-  ls.set("cfg", cfg); ls.set("blocked", [...blocked]); ls.set("gateName", r.gate); ls.set("gateType", r.type || "entry");
+  ls.set("cfg", cfg); ls.set("blocked", [...blocked]); ls.set("gateName", r.gate); ls.set("gateType", r.type || "entry"); ls.set("gateZone", r.zone || "campus");
   applyMode();
   return r;
 }
@@ -345,7 +347,7 @@ async function boot() {
 /* ---------------- gate switched off / code replaced: erase everything */
 async function wipe(why) {
   cam?.stop(); await store.clear();
-  ["cfg", "blocked", "gateName", "gateType", "queue", "seen", "feed"].forEach(ls.del);
+  ["cfg", "blocked", "gateName", "gateType", "gateZone", "queue", "seen", "feed"].forEach(ls.del);
   $("lockedWhy").textContent = (why || "This gate is no longer active.") + " Student data on this phone has been erased.";
   show("locked");
 }
@@ -419,15 +421,17 @@ async function handle(text, manual) {
       seen[`${today()}|${id}|${r.entries || 1}`] = nowIST(); ls.set("seen", seen);
       addLog(manual || !p.photo ? "warn" : "ok", `${p.name}${r.reentry ? " · re-entry" : ""}${manual ? " · typed ID" : ""}`);
       return result(manual || !p.photo ? "warn" : "ok", r.reentry ? "WELCOME BACK" : "ALLOW",
-        manual ? "Typed ID: check the face very carefully." : r.reentry ? `Re-entry recorded (entry ${r.entries} today).` : "Entry recorded.", p,
+        manual ? "Typed ID: check the face very carefully." : r.reentry ? `Re-entry recorded (entry ${r.entries} today).` : `Entry to ${place()} recorded.`, p,
         p.photo ? "Match the face with the photo before letting them in." : "No photo on file: check their college ID card.", true);
     case "exited":
       seen[`${today()}|${id}|out|${Date.now()}`] = nowIST(); ls.set("seen", seen);
       addLog("ok", `${p.name} · went out`);
-      return result("out", "EXIT RECORDED", `Left at ${r.time}. They can come back in through an entry gate.`, p, "Check the face: the card leaves with its owner.", true);
+      return result("out", "EXIT RECORDED", isVenue() ? `Left the venue at ${r.time}. They are still on campus and can come back to the venue.` : `Left the campus at ${r.time}. They can come back in through a campus entry gate.`, p, "Check the face: the card leaves with its owner.", true);
     case "not_inside": refused(); addLog("bad", `${p.name} · not inside`);
-      return result("bad", "NOT INSIDE", r.time ? `This pass is already outside (left at ${r.time}, ${r.gate}).` : "This pass has not entered today.", p, "Someone else may be using this card. Do not let it through. Send to the SYNERGY desk.");
-    case "used":     refused(); addLog("bad", `${p.name} · already inside`); return result("bad", "ALREADY INSIDE", `This pass came in today at ${r.time}, ${r.gate}, and has not gone out.`, p, "Same card twice, a copy, or a card passed outside. Do not allow entry.");
+      return result("bad", "NOT INSIDE", r.time ? `This pass is already outside ${place()} (left at ${r.time}, ${r.gate}).` : `This pass has not entered ${place()} today.`, p, "Someone else may be using this card. Do not let it through. Send to the SYNERGY desk.");
+    case "used":     refused(); addLog("bad", `${p.name} · already inside`); return result("bad", "ALREADY INSIDE", `This pass entered ${place()} today at ${r.time}, ${r.gate}, and has not gone out.`, p, "Same card twice, a copy, or a card passed outside. Do not allow entry.");
+    case "no_campus": refused(); addLog("bad", `${p.name} · no campus check-in`);
+      return result("bad", "CAMPUS FIRST", "This pass has not checked in at a university gate today.", p, "Send them to scan in at a campus gate first. A card that skipped the campus gate may be a copy or came over the wall.");
     case "blocked":  refused(); addLog("bad", `${p.name} · blocked`); return result("bad", "BLOCKED PASS", r.note || "Blocked by the SYNERGY desk.", p, "Do not allow entry. Send to the SYNERGY desk.");
     case "replaced": refused(); addLog("bad", `${p.name} · old card`); return result("bad", "OLD PASS", "This card was replaced by a new one (reported lost).", p, "Do not allow entry.");
     case "manual_off": return result("bad", "TYPING IDs IS OFF", "The admin has switched off typed IDs.", p, "Ask them to show the QR pass.");

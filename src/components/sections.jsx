@@ -1,4 +1,5 @@
 // Page chrome and the simpler sections.
+import { openPass } from "./GetPass.jsx";
 import { useEffect, useRef, useState } from "react";
 import { A, FACULTIES, FEST, NAV, SOCIALS } from "../data/site.js";
 import { reduceMotion } from "../three/shared.js";
@@ -44,7 +45,7 @@ export function Nav() {
       <nav className="links" aria-label="Sections">
         {NAV.map(([id, label]) => <a key={id} href={`#${id}`} className={active === id ? "active" : undefined} onClick={() => setOpen(false)}>{label}</a>)}
       </nav>
-      <a className="btn btn-sm" href="https://www.instagram.com/united_university/" target="_blank" rel="noopener">Get updates</a>
+      <button className="btn btn-sm" onClick={() => { setOpen(false); openPass(); }}>Get your pass</button>
       <button ref={menuBtn} className="menu" aria-label="Open menu" aria-expanded={open} onClick={() => setOpen(o => !o)}><span /><span /></button>
     </header>
   );

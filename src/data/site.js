@@ -11,7 +11,10 @@ export const FEST = {
 // relative asset path: works on localhost and under /senergy2026/ on GitHub Pages
 export const A = path => `assets/${path}`;
 
-export const NAV = [["about", "About"], ["events", "Events"], ["starnight", "Star Night"], ["archive", "Past years"], ["gallery", "Gallery"], ["venue", "Venue"], ["contact", "Contact"]];
+// gate server (Google Apps Script web app): students download their own pass from it
+export const PASS_SERVER = import.meta.env.VITE_PASS_SERVER || "https://script.google.com/macros/s/AKfycbzWIFzj2mr0aExRf6cgs_SWCBz5y1MabjsmO4-T8L-EFk8eWC10CrSA6giBxqIWMloN0A/exec";
+
+export const NAV = [["about", "About"], ["pass", "Get pass"], ["events", "Events"], ["starnight", "Star Night"], ["archive", "Past years"], ["gallery", "Gallery"], ["venue", "Venue"], ["contact", "Contact"]];
 
 export const RING = [
   ["glob_4", "United students on a global exposure tour"], ["audi1", "University auditorium"], ["sport1", "Indoor sports complex"],

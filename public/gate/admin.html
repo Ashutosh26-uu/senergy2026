@@ -23,6 +23,9 @@
   .btn:disabled { opacity: .5; cursor: default; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; } .row > input { flex: 1; min-width: 180px; }
   .err { color: var(--bad); font-weight: 600; min-height: 1.2em; }
+  .logo { height: 44px; width: auto; display: block; }
+  .brandrow { display: flex; align-items: center; gap: 12px; }
+  .brandrow small { display: block; color: var(--muted, #a9a3c2); font-size: .78rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
   .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
   .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
   .tabs button { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; font-weight: 600; }
@@ -49,7 +52,8 @@
 
   <!-- login -->
   <section id="login" class="card" style="max-width:460px;margin:8vh auto;display:grid;gap:12px">
-    <h1>SYNERGY 2026 · Gate admin</h1>
+    <img class="logo" src="../assets/img/synergy-2026.svg" alt="SYNERGY 2026" style="height:64px;margin:0 auto 4px">
+    <h1 style="text-align:center">Gate admin</h1>
     <label class="small muted">Gate server URL (from the Apps Script deployment, ends in /exec)<input id="url" type="url" placeholder="https://script.google.com/macros/s/…/exec"></label>
     <label class="small muted">Admin password<input id="pw" type="password" autocomplete="current-password"></label>
     <button class="btn" id="loginGo">Log in</button>
@@ -58,7 +62,7 @@
 
   <!-- app -->
   <section id="app" hidden>
-    <div class="top"><h1>SYNERGY 2026 · Gate admin</h1><div class="row"><span class="muted small" id="updated"></span><button class="btn ghost" id="logout">Log out</button></div></div>
+    <div class="top"><div class="brandrow"><img class="logo" src="../assets/img/synergy-2026.svg" alt="SYNERGY 2026"><h1><small>SYNERGY 2026</small>Gate admin</h1></div><div class="row"><span class="muted small" id="updated"></span><button class="btn ghost" id="logout">Log out</button></div></div>
     <div class="tabs" role="group">
       <button data-tab="overview" aria-pressed="true">Overview</button>
       <button data-tab="gates" aria-pressed="false">Gates</button>
@@ -69,12 +73,14 @@
 
     <div class="panel on" id="overview">
       <div class="grid">
-        <div class="card stat"><b id="sInside">0</b><span>inside right now</span></div>
+        <div class="card stat"><b id="sInside">0</b><span>inside the campus now</span></div>
+        <div class="card stat"><b id="sVenue">0</b><span>inside the venue now</span></div>
         <div class="card stat"><b id="sToday">0</b><span>entries today</span></div>
         <div class="card stat"><b id="sExits">0</b><span>exits today</span></div>
         <div class="card stat"><b id="sGates">0</b><span>gates switched on</span></div>
         <div class="card stat"><b id="sRoster">0</b><span>passes on the roster</span></div>
         <div class="card stat"><b id="sBlocked">0</b><span>blocked passes</span></div>
+        <div class="card stat"><b id="sDownloads">0</b><span>passes downloaded online</span></div>
       </div>
       <div class="card" id="setupWarn" hidden></div>
       <div class="card"><h2>Today by gate</h2><table id="perGate"></table></div>
@@ -86,7 +92,9 @@
       <div class="card"><h2>Add a gate</h2>
         <div class="row"><input id="gateName" placeholder="e.g. Gate 1, Main Gate, Back Gate">
           <select id="gateType" style="padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:#0d0b16;color:var(--ink)"><option value="entry">Entry gate</option><option value="exit">Exit gate</option></select>
+          <select id="gateZone" style="padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:#0d0b16;color:var(--ink)"><option value="campus">University campus</option><option value="venue">Fest venue</option></select>
           <button class="btn" id="gateAdd">Create gate</button></div>
+        <p class="small muted"><b>Two zones.</b> <b>University campus</b> gates (the 3 main gates) and the <b>Fest venue</b> gate are counted separately: getting into the campus does <i>not</i> mark a student as inside the venue. The venue gate admits only students who already checked in at a campus gate, and a campus exit also ends their venue stay.</p>
         <p class="small muted"><b>Entry gates</b> let a pass in only if it is outside. <b>Exit gates</b> let a pass out only if it is inside. So a card can never be used twice in a row, and a student who goes out (exit scan) can come back in.</p>
         <p class="small muted">Each gate gets a secret code, shown once as a QR. Scan it with the guard's phone at <b id="gateUrl"></b>. Switching a gate off locks that phone at once and erases the student data on it.</p>
       </div>
@@ -118,6 +126,7 @@
       <div class="card" style="display:grid;gap:16px">
         <p class="small muted"><b>No offline entry.</b> A gate without internet lets nobody through, so a pass can never be used twice at two gates.</p>
         <label class="switch"><input type="checkbox" id="optManual"><span><b>Allow typing an ID for damaged cards</b><br><span class="small muted">The guard still sees the photo, and the entry is marked "typed ID". Turn off if typed IDs are being misused.</span></span></label>
+        <label class="switch"><input type="checkbox" id="optCampus"><span><b>Venue gate needs a campus check-in first</b><br><span class="small muted">Recommended. A pass that never entered through a campus gate is refused at the venue ("CAMPUS FIRST"). Turn off only if the campus gates are not scanning.</span></span></label>
         <p class="small muted">The admin password is changed in the Google Sheet: SYNERGY menu → Set admin password. That also signs everyone out.</p>
       </div>
     </div>
@@ -172,7 +181,7 @@ async function refresh() {
   if (!session) return;
   let d; try { d = await call("admin.dashboard"); } catch { return; }
   if (!d.ok) return;
-  $("sToday").textContent = d.entriesToday; $("sInside").textContent = d.insideNow ?? 0; $("sExits").textContent = d.exitsToday ?? 0; $("sRoster").textContent = d.rosterSize; $("sBlocked").textContent = d.blocked;
+  $("sToday").textContent = d.entriesToday; $("sInside").textContent = d.insideCampus ?? d.insideNow ?? 0; $("sVenue").textContent = d.insideVenue ?? 0; $("sDownloads").textContent = d.downloads ?? 0; $("sExits").textContent = d.exitsToday ?? 0; $("sRoster").textContent = d.rosterSize; $("sBlocked").textContent = d.blocked;
   $("sGates").textContent = d.gates.filter(g => g.active).length;
   const warn = [];
   if (!d.rosterSize) warn.push("Import the roster (Student data → 1). Until then every pass shows NOT ON LIST.");
@@ -182,14 +191,14 @@ async function refresh() {
   table("perGate", ["Gate", "Entries today"], Object.entries(d.perGate).map(([g, n]) => `<tr><td>${esc(g)}</td><td>${n}</td></tr>`));
   table("recent", ["Time", "Day", "ID", "Name", "Gate", "How"], d.recent.map(r => `<tr><td>${r.dir === "OUT" ? "⬅" : "➡"} ${esc(r.time)}</td><td>${esc(r.day)}</td><td>${esc(r.id)}</td><td>${esc(r.name)}</td><td>${esc(r.gate)}</td><td>${esc(r.method)}</td></tr>`));
   table("log", ["Time", "Who", "What", "Detail"], d.log.map(r => `<tr><td>${esc(r.time)}</td><td>${esc(r.who)}</td><td>${esc(r.action)}</td><td>${esc(r.detail)}</td></tr>`));
-  $("optManual").checked = d.config.allowManual;
+  $("optManual").checked = d.config.allowManual; $("optCampus").checked = d.config.requireCampus !== false;
   drawGates(d.gates);
   $("updated").textContent = "Updated " + new Date().toLocaleTimeString();
 }
 
 /* gates */
 function drawGates(gates) {
-  table("gateTable", ["Gate", "Status", "Last seen", ""], gates.map(g => `<tr><td><b>${esc(g.name)}</b><br><span class="small muted">${g.type === "exit" ? "Exit gate" : "Entry gate"}</span></td>
+  table("gateTable", ["Gate", "Status", "Last seen", ""], gates.map(g => `<tr><td><b>${esc(g.name)}</b><br><span class="small muted">${g.zone === "venue" ? "Fest venue" : "Campus"} · ${g.type === "exit" ? "Exit gate" : "Entry gate"}</span></td>
     <td><span class="tag ${g.active ? "on" : "off"}">${g.active ? "On" : "Off"}</span></td><td class="small">${esc(g.lastSeen || "never")}</td>
     <td class="row"><button class="btn ghost" data-act="toggle" data-id="${esc(g.id)}" data-on="${g.active}">${g.active ? "Switch off" : "Switch on"}</button>
     <button class="btn ghost" data-act="code" data-id="${esc(g.id)}" data-name="${esc(g.name)}">New code</button>
@@ -205,7 +214,7 @@ function showCode(name, code) {
 $("mClose").onclick = () => { $("modal").classList.remove("on"); $("mCode").textContent = ""; $("mQR").innerHTML = ""; $("mCopy").textContent = "Copy code"; };
 $("gateAdd").onclick = async () => {
   const name = $("gateName").value.trim(); if (!name) return;
-  const r = await call("admin.gateCreate", { name, type: $("gateType").value }); if (!r.ok) return alert(r.error);
+  const r = await call("admin.gateCreate", { name, type: $("gateType").value, zone: $("gateZone").value }); if (!r.ok) return alert(r.error);
   $("gateName").value = ""; showCode(r.gate.name, r.code); refresh();
 };
 $("gateTable").onclick = async e => {
@@ -219,11 +228,12 @@ $("gateTable").onclick = async e => {
 /* passes */
 async function find() {
   const r = await call("admin.passFind", { q: $("q").value }); if (!r.ok) return alert(r.error);
-  table("passTable", ["Pass", "Status", "Entries", ""], r.passes.map(p => `<tr><td><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.id)} · course ${esc(p.course)} · v${esc(p.version)}</span></td>
+  table("passTable", ["Pass", "Status", "Entries", ""], r.passes.map(p => `<tr><td><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.id)} · course ${esc(p.course)} · v${esc(p.version)}</span><br><span class="small muted">${p.downloaded ? "Downloaded online " + esc(p.downloaded) : "Not downloaded online"}</span></td>
     <td><span class="tag ${p.status === "blocked" ? "off" : "on"}">${p.status === "blocked" ? "Blocked" : "Active"}</span>${p.note ? `<br><span class="small muted">${esc(p.note)}</span>` : ""}</td>
     <td class="small">${p.entries.map(e => `${e.dir === "OUT" ? "⬅ out" : "➡ in"} ${esc(e.day)} ${esc(e.time)} · ${esc(e.gate)}${e.method === "typed ID" ? " (typed)" : ""}`).join("<br>") || "none"}</td>
     <td class="row">${p.status === "blocked" ? `<button class="btn ghost" data-act="unblock" data-id="${esc(p.id)}">Unblock</button>` : `<button class="btn danger" data-act="block" data-id="${esc(p.id)}">Block</button>`}
-    <button class="btn ghost" data-act="readmit" data-id="${esc(p.id)}">Mark outside</button></td></tr>`));
+    <button class="btn ghost" data-act="readmit" data-id="${esc(p.id)}">Mark outside</button>
+    ${p.downloaded ? `<button class="btn ghost" data-act="redl" data-id="${esc(p.id)}">Allow download again</button>` : ""}</td></tr>`));
 }
 $("find").onclick = find; $("q").onkeydown = e => { if (e.key === "Enter") find(); };
 $("passTable").onclick = async e => {
@@ -231,6 +241,7 @@ $("passTable").onclick = async e => {
   const id = b.dataset.id; let r;
   if (b.dataset.act === "block") { const note = prompt("Reason (e.g. lost card, misuse):", "lost card"); if (note === null) return; r = await call("admin.passBlock", { id, note }); }
   if (b.dataset.act === "unblock") r = await call("admin.passUnblock", { id });
+  if (b.dataset.act === "redl") { const note = prompt("Allow this student to download the pass once more? If someone else may have it, re-issue the pass instead. Reason:", "student lost the file"); if (note === null) return; r = await call("admin.passResetDownload", { id, note }); }
   if (b.dataset.act === "readmit") { const note = prompt("Mark this pass as outside? Reason:", "left without an exit scan"); if (note === null) return; r = await call("admin.passReadmit", { id, note }); }
   if (r && !r.ok) alert(r.error);
   find(); refresh();
@@ -240,7 +251,16 @@ $("passTable").onclick = async e => {
 $("rosterGo").onclick = async () => {
   const f = $("rosterFile").files[0]; if (!f) return;
   $("rosterMsg").textContent = "Importing…";
-  try { const rows = JSON.parse(await f.text()); const r = await call("admin.rosterImport", { rows }, 120000); $("rosterMsg").textContent = r.ok ? `Done: ${r.added} added, ${r.updated} updated.` : r.error; }
+  try {
+    const rows = JSON.parse(await f.text()); let added = 0, updated = 0;
+    for (let i = 0; i < rows.length; i += 150) {          // small batches: the file carries photos and is ~11 MB
+      $("rosterMsg").textContent = `Importing… ${Math.min(i + 150, rows.length)} / ${rows.length}`;
+      const r = await call("admin.rosterImport", { rows: rows.slice(i, i + 150) }, 120000);
+      if (!r.ok) throw new Error(r.error || "server refused");
+      added += r.added; updated += r.updated;
+    }
+    $("rosterMsg").textContent = `Done: ${added} added, ${updated} updated.`;
+  }
   catch (e) { $("rosterMsg").textContent = "Could not read that file: " + e.message; }
   refresh();
 };
@@ -255,6 +275,7 @@ $("packGo").onclick = async () => {
 
 /* settings */
 $("optManual").onchange = e => call("admin.config", { allowManual: e.target.checked });
+$("optCampus").onchange = e => call("admin.config", { requireCampus: e.target.checked });
 
 function start() { $("login").hidden = true; $("app").hidden = false; $("gateUrl").textContent = gatePage; refresh(); }
 setInterval(refresh, 10000);

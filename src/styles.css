@@ -746,3 +746,41 @@ section[id], .ev26 { scroll-margin-top: 90px; }
 .cal-ic { flex: none; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; background: #fff; color: #111; font: 700 .85rem var(--body); }
 .cal-ic.cal-g { color: #4285f4; }
 .cal-ic:not(.cal-g)::before { content: "📅"; font-size: .9rem; }
+
+/* ---------- get your pass ---------- */
+.pass-form { display: grid; gap: 14px; margin-top: 18px; }
+.pass-form label { display: grid; gap: 6px; font-size: .85rem; color: var(--muted); }
+.pass-form input:not([type]), .pass-form input[type="text"] { font: 600 1rem var(--body); color: var(--ink); background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; outline: none; transition: border-color .2s, background .2s; }
+.pass-form input:focus { border-color: var(--cyan); background: rgba(41,224,255,.07); }
+.pass-form .check { grid-template-columns: auto 1fr; align-items: start; gap: 10px; font-size: .82rem; line-height: 1.5; }
+.pass-form .check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--hot); }
+.pass-form .btn { justify-self: start; border: 0; cursor: pointer; font: inherit; font-weight: 700; }
+.pass-form .btn:disabled { opacity: .6; cursor: progress; transform: none; }
+.pass-err { margin: 0; padding: 10px 12px; border-radius: 10px; background: rgba(255,46,136,.12); border: 1px solid rgba(255,46,136,.45); color: #ffd0e3; font-size: .9rem; }
+.small { font-size: .82rem; } .muted { color: var(--muted); }
+.pass-done { display: grid; grid-template-columns: minmax(0, 220px) 1fr; gap: 20px; align-items: start; margin-top: 18px; }
+.pass-done img { width: 100%; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.pass-done h3 { margin: 0 0 8px; font-family: var(--display); font-size: 1.1rem; }
+.pass-done .btn { border: 0; cursor: pointer; font: inherit; font-weight: 700; }
+.poster-pair { display: grid; gap: 18px; }
+.poster-thumb { all: unset; cursor: pointer; display: block; position: relative; border-radius: 18px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 24px 70px -20px rgba(0,0,0,.8); transition: transform .3s, box-shadow .3s; }
+.poster-thumb:hover, .poster-thumb:focus-visible { transform: translateY(-4px); box-shadow: 0 30px 80px -18px rgba(255,46,136,.45); }
+.poster-thumb:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.poster-thumb img { width: 100%; height: auto; }
+.poster-thumb span { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 14px 10px; font-size: .8rem; font-weight: 600; background: linear-gradient(transparent, rgba(0,0,0,.85)); }
+.pass-fab { position: fixed; left: 18px; bottom: 18px; z-index: 40; display: flex; align-items: center; gap: 8px; padding: 12px 18px; border: 0; border-radius: 999px; cursor: pointer; font: 700 .9rem var(--body); color: #fff; background: var(--grad); box-shadow: 0 14px 40px -8px rgba(255,46,136,.7); animation: fabIn .6s 1.2s both; }
+.pass-fab:hover { transform: translateY(-2px); }
+.pass-fab.hide { opacity: 0; transform: translateY(20px); pointer-events: none; transition: opacity .3s, transform .3s; }
+@keyframes fabIn { from { opacity: 0; transform: translateY(20px); } }
+.pass-modal { width: min(520px, calc(100vw - 24px)); max-height: 92vh; overflow-y: auto; padding: 28px 24px 24px; border: 1px solid var(--line); border-radius: var(--radius); background: #0e0b18; color: var(--ink); box-shadow: 0 40px 120px rgba(0,0,0,.8); }
+.pass-modal::backdrop { background: rgba(4,3,8,.8); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.pass-modal h2 { margin: 6px 0 0; font-family: var(--display); font-size: 1.4rem; text-align: center; }
+.pass-modal-logo { width: 150px; margin: 0 auto; border-radius: 10px; }
+.pass-modal .lb-close { position: absolute; top: 10px; right: 10px; }
+.pass-modal .pass-done { grid-template-columns: 1fr; }
+.pass-modal .pass-done img { max-width: 240px; margin: 0 auto; }
+@media (max-width: 860px) {
+  .pass-done { grid-template-columns: 1fr; }
+  .pass-done img { max-width: 260px; }
+  .pass-fab { left: 12px; bottom: 12px; padding: 11px 15px; font-size: .85rem; }
+}
