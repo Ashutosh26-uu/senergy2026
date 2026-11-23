@@ -4,256 +4,257 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#07060b">
 <title>SYNERGY 2026 · Gate</title>
 <style>
-  :root { --bg:#07060b; --card:#14111f; --line:rgba(255,255,255,.12); --ink:#f4f1fa; --muted:#a9a3b8; --ok:#16c172; --bad:#ff3b4e; --warn:#ffb547; --cyan:#29e0ff; }
+  :root { --bg:#07060b; --card:#14111f; --line:rgba(255,255,255,.12); --ink:#f4f1fa; --muted:#a9a3b8; --ok:#16c172; --bad:#ff3b4e; --warn:#ffb547; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  button, input { font: inherit; }
-  .screen { display: none; min-height: 100%; padding: 16px; }
-  .screen.on { display: flex; flex-direction: column; gap: 14px; }
-  h1 { margin: 6px 0 0; font-size: 1.35rem; }
-  .muted { color: var(--muted); font-size: .9rem; }
-  label { display: grid; gap: 6px; font-weight: 600; }
-  input { width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  button, input, textarea { font: inherit; }
+  .screen { display: none; min-height: 100vh; padding: 16px; flex-direction: column; gap: 14px; }
+  .screen.on { display: flex; }
+  h1 { margin: 6px 0 0; font-size: 1.3rem; }
+  .muted { color: var(--muted); font-size: .9rem; margin: 0; }
+  input, textarea { width: 100%; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
   .btn { padding: 15px; border: 0; border-radius: 14px; background: linear-gradient(100deg,#ff2e88,#a35cff 45%,#29e0ff); color: #fff; font-weight: 700; cursor: pointer; }
   .btn.ghost { background: var(--card); border: 1px solid var(--line); }
+  .btn.danger { background: #5a1019; border: 1px solid #ff3b4e; }
   .btn:disabled { opacity: .5; }
-  .err { color: var(--bad); font-weight: 600; min-height: 1.2em; }
-  /* scan screen */
+  .err { color: var(--bad); font-weight: 600; min-height: 1.2em; margin: 0; }
   .top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   .pill { padding: 6px 10px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: .8rem; white-space: nowrap; }
-  .pill.on { border-color: var(--ok); color: var(--ok); } .pill.off { border-color: var(--warn); color: var(--warn); }
+  .pill.on { border-color: var(--ok); color: var(--ok); } .pill.off { border-color: var(--bad); color: var(--bad); }
   .cam { position: relative; width: 100%; aspect-ratio: 1; border-radius: 18px; overflow: hidden; background: #000; }
   .cam video { width: 100%; height: 100%; object-fit: cover; }
   .cam .frame { position: absolute; inset: 14%; border: 3px solid rgba(255,255,255,.8); border-radius: 18px; box-shadow: 0 0 0 999px rgba(0,0,0,.35); }
   .row { display: flex; gap: 10px; } .row > * { flex: 1; }
   .stats { display: flex; justify-content: space-between; font-size: .85rem; color: var(--muted); }
-  /* result overlay */
-  .result { position: fixed; inset: 0; display: none; flex-direction: column; padding: 18px; gap: 14px; z-index: 10; }
+  .result { position: fixed; inset: 0; display: none; flex-direction: column; padding: 18px; gap: 14px; z-index: 10; overflow: auto; }
   .result.on { display: flex; }
-  .result.ok { background: #0b3d22; } .result.bad { background: #4a0b12; } .result.warn { background: #4a3305; }
-  .verdict { font-size: 2.2rem; font-weight: 900; letter-spacing: .02em; text-align: center; }
-  .why { text-align: center; font-weight: 600; }
+  .result.ok { background: #0b3d22; } .result.bad { background: #4a0b12; } .result.warn { background: #4a3305; } .result.busy { background: #15122a; }
+  .verdict { font-size: 2.2rem; font-weight: 900; text-align: center; letter-spacing: .02em; }
+  .why { text-align: center; font-weight: 600; margin: 0; }
   .who { display: flex; gap: 14px; align-items: center; background: rgba(0,0,0,.3); border-radius: 18px; padding: 14px; }
   .who img, .who .nophoto { width: 132px; height: 165px; object-fit: cover; border-radius: 12px; background: #2a2533; flex: none; }
   .who .nophoto { display: grid; place-items: center; text-align: center; font-weight: 700; color: var(--warn); font-size: .85rem; padding: 8px; }
   .who b { display: block; font-size: 1.3rem; line-height: 1.2; } .who code { display: block; margin-top: 6px; font-size: 1rem; }
-  .result .btn { margin-top: auto; font-size: 1.1rem; }
-  .log { font-size: .8rem; color: var(--muted); max-height: 9em; overflow: auto; }
+  .actions { margin-top: auto; display: grid; gap: 10px; }
+  .log { font-size: .8rem; color: var(--muted); max-height: 8em; overflow: auto; }
+  .lock { text-align: center; justify-content: center; }
 </style>
 </head>
 <body>
 
-<!-- 1. one-time setup on each guard phone -->
-<section class="screen on" id="setup">
-  <h1>SYNERGY 2026 · Gate scanner</h1>
-  <p class="muted">One-time setup on this phone. You need the gate pack file and its passphrase from the SYNERGY desk. Student data stays on this phone only.</p>
-  <label>Gate name <input id="gate" placeholder="e.g. Main Gate" autocomplete="off"></label>
-  <label>Gate pack file <input id="pack" type="file" accept=".syn"></label>
-  <label>Passphrase <input id="pass" type="password" autocomplete="off"></label>
-  <button class="btn" id="unlock">Unlock and start</button>
+<!-- 1. first run: scan the gate code shown in the admin panel -->
+<section class="screen" id="setup">
+  <h1>SYNERGY 2026 · Gate setup</h1>
+  <p class="muted">Point the camera at the <b>gate code</b> the admin shows you (Admin → Gates). Or paste the code below.</p>
+  <div class="cam"><video id="setupVideo" playsinline muted></video><div class="frame"></div></div>
+  <textarea id="setupCode" rows="2" placeholder="SYN26GATE:…"></textarea>
+  <button class="btn" id="setupGo">Connect this gate</button>
   <p class="err" id="setupErr"></p>
 </section>
 
-<!-- 2. scanning -->
+<!-- 2. loading the student data -->
+<section class="screen lock" id="loading"><h1 id="loadingTitle">Connecting…</h1><p class="muted" id="loadingText"></p></section>
+
+<!-- 3. scanning -->
 <section class="screen" id="scan">
   <div class="top"><b id="gateName"></b><span class="pill" id="net">…</span></div>
   <div class="cam"><video id="video" playsinline muted></video><div class="frame"></div></div>
-  <div class="stats"><span id="countToday">0 entries today on this phone</span><span id="queue"></span></div>
-  <div class="row"><input id="manual" placeholder="Type ID, e.g. UU26XXXXXXX" autocapitalize="characters" autocomplete="off"><button class="btn ghost" id="manualGo" style="flex:none">Check</button></div>
-  <div class="row"><button class="btn ghost" id="settings">Settings</button></div>
+  <div class="stats"><span id="countToday"></span><span id="queue"></span></div>
+  <div class="row" id="manualRow"><input id="manual" placeholder="Damaged card? Type the ID" autocapitalize="characters" autocomplete="off"><button class="btn ghost" id="manualGo" style="flex:none">Check</button></div>
   <div class="log" id="log"></div>
 </section>
 
-<!-- 3. verdict -->
+<!-- 4. gate switched off -->
+<section class="screen lock" id="locked">
+  <h1>This gate is switched off</h1>
+  <p class="muted" id="lockedWhy">The admin has turned this gate off. Student data on this phone has been erased.</p>
+  <button class="btn" id="relink">Set up again</button>
+</section>
+
+<!-- verdict -->
 <div class="result" id="result">
   <div class="verdict" id="verdict"></div>
-  <div class="why" id="why"></div>
+  <p class="why" id="why"></p>
   <div class="who" id="who"></div>
   <p class="why" id="hint"></p>
-  <button class="btn" id="next">Next scan</button>
+  <div class="actions">
+    <button class="btn danger" id="flag" hidden>Wrong person: refuse and block this pass</button>
+    <button class="btn" id="next">Next scan</button>
+  </div>
 </div>
 
 <script src="vendor/jsQR.js"></script>
 <script type="module">
-import * as ed from "./vendor/ed25519.js";
+import { api, verifyPass, readSetup, decryptPack, openStore, QRCamera, b64u, esc } from "./common.js";
 
-// Public half of the pass-signing key. The private half never leaves the pass maker.
-const PUBLIC_KEY = "ISE-T-7xTQlwDAqwzXOCVyyqUJmIPe4hsT7vs1W09CU";
-const CONTEXT = "SYNERGY2026|";
 const $ = id => document.getElementById(id);
-const b64u = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), c => c.charCodeAt(0));
-const enc = new TextEncoder();
-const pubKey = b64u(PUBLIC_KEY);
-
-/* ---------------- storage: roster in IndexedDB, settings + local entry log in localStorage */
-const db = await new Promise((res, rej) => { const r = indexedDB.open("synergy-gate", 1); r.onupgradeneeded = () => r.result.createObjectStore("kv"); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
-const kv = { get: k => new Promise(r => { const q = db.transaction("kv").objectStore("kv").get(k); q.onsuccess = () => r(q.result); q.onerror = () => r(undefined); }),
-             set: (k, v) => new Promise((r, j) => { const t = db.transaction("kv", "readwrite"); t.objectStore("kv").put(v, k); t.oncomplete = r; t.onerror = () => j(t.error); }) };
-const ls = { get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
-
-let roster = null, sync = null;
-const dayKey = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });   // one entry per person per day
+const store = await openStore("synergy-gate-v2");
+const ls = { get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }, del: k => { try { localStorage.removeItem(k); } catch {} } };
+const show = id => document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id));
 const nowIST = () => new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" });
+const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
 
-/* ---------------- setup: decrypt the gate pack with the passphrase */
-async function decryptPack(buf, pass) {
-  const b = new Uint8Array(buf);
-  if (new TextDecoder().decode(b.slice(0, 8)) !== "SYNPACK1") throw new Error("This is not a SYNERGY gate pack file.");
-  const salt = b.slice(8, 24), iv = b.slice(24, 36), ct = b.slice(36);
-  const base = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveKey"]);
-  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 250000 }, base, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
-  try {
-    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv, additionalData: enc.encode("SYNPACK1") }, key, ct);
-    return JSON.parse(new TextDecoder().decode(plain));
-  } catch { throw new Error("Wrong passphrase."); }
+let link = ls.get("link", null);              // { u: server URL, c: gate code, n: gate name }
+let roster = null, cfg = { allowOffline: false, allowManual: true }, blocked = new Set();
+let setupCam = null, cam = null;
+
+/* ---------------- setup */
+async function connect(code) {
+  const o = readSetup(code);
+  if (!o) { $("setupErr").textContent = "That is not a gate code. Ask the admin to show the gate's code."; return; }
+  setupCam?.stop();
+  link = o; ls.set("link", o);
+  await boot();
 }
-$("unlock").onclick = async () => {
-  $("setupErr").textContent = "";
-  const f = $("pack").files[0], pass = $("pass").value.trim(), gate = $("gate").value.trim();
-  if (!gate) return ($("setupErr").textContent = "Enter a gate name.");
-  if (!f || !pass) return ($("setupErr").textContent = "Choose the pack file and enter the passphrase.");
-  $("unlock").disabled = true; $("unlock").textContent = "Unlocking…";
-  try {
-    const pack = await decryptPack(await f.arrayBuffer(), pass);
-    const map = {}; for (const [id, name, course, photo] of pack.students) map[id] = { id, name, course, photo };
-    await kv.set("roster", map); await kv.set("sync", pack.sync || {});
-    ls.set("gate", gate);
-    await start();
-  } catch (e) { $("setupErr").textContent = e.message || "Could not open the pack."; }
-  $("unlock").disabled = false; $("unlock").textContent = "Unlock and start";
-};
-$("settings").onclick = () => { if (confirm("Change gate name or reload the pack? Entries already recorded are kept.")) { stopCam(); $("gate").value = ls.get("gate", ""); show("setup"); } };
+$("setupGo").onclick = () => connect($("setupCode").value);
+$("relink").onclick = () => { ls.del("link"); location.reload(); };
 
-/* ---------------- verify a pass */
-async function verifyQR(text) {
-  const m = /^SYN26\.(UU\d{9})\.([A-Za-z0-9_-]{80,90})$/.exec(text.trim());
-  if (!m) return { bad: "Not a SYNERGY 2026 pass." };
-  const [, id, sig] = m;
-  let ok = false;
-  try { ok = await ed.verifyAsync(b64u(sig), enc.encode(CONTEXT + id), pubKey); } catch {}
-  return ok ? { id } : { bad: "Fake or edited pass. Signature does not match." };
+/* ---------------- start: say hello to the server, get the key, load the pack */
+async function hello() {
+  const r = await api(link.u, { action: "gate.hello", code: link.c });
+  if (r.revoked) { await wipe(r.error); return null; }
+  if (!r.ok) throw new Error(r.error);
+  cfg = r.config; blocked = new Set(r.blocked || []);
+  ls.set("cfg", cfg); ls.set("blocked", [...blocked]); ls.set("gateName", r.gate);
+  return r;
 }
-
-/* ---------------- record an entry: shared sheet when online, this phone's log always */
-const localLog = () => ls.get("entries", {});            // { "2026-12-05|UU26…": {t, gate} }
-async function record(p) {
-  const day = dayKey(), k = `${day}|${p.id}`, log = localLog(), gate = ls.get("gate", "");
-  if (log[k]) return { used: true, at: log[k].t, gate: log[k].gate, where: "this phone" };
-  if (sync?.url) {
-    try {
-      const r = await fetch(sync.url, { method: "POST", body: JSON.stringify({ key: sync.key, id: p.id, name: p.name, gate, day }) });
-      const j = await r.json();
-      if (j.status === "used") { log[k] = { t: j.time, gate: j.gate }; ls.set("entries", log); return { used: true, at: j.time, gate: j.gate, where: "shared sheet" }; }
-      if (j.status === "ok") { log[k] = { t: nowIST(), gate }; ls.set("entries", log); setNet(true); return { used: false }; }
-      throw new Error(j.error || "sync error");
-    } catch { setNet(false); }
+async function boot() {
+  if (!link) {
+    show("setup");
+    setupCam = new QRCamera($("setupVideo"), t => { if (readSetup(t)) connect(t); });
+    setupCam.start().catch(() => { $("setupErr").textContent = "Camera blocked. Paste the code instead."; });
+    return;
   }
-  // offline (or no shared sheet yet): allow, remember here, and send to the sheet later
-  log[k] = { t: nowIST(), gate, pending: !!sync?.url }; ls.set("entries", log);
-  const q = ls.get("queue", []); if (sync?.url) { q.push({ id: p.id, name: p.name, gate, day }); ls.set("queue", q); }
-  return { used: false, offline: !!sync?.url };
-}
-async function flushQueue() {
-  const q = ls.get("queue", []); if (!q.length || !sync?.url || !navigator.onLine) return renderStats();
-  const left = [];
-  for (const e of q) {
-    try { const r = await fetch(sync.url, { method: "POST", body: JSON.stringify({ key: sync.key, ...e }) }); const j = await r.json(); if (j.status !== "ok" && j.status !== "used") left.push(e); else setNet(true); }
-    catch { left.push(e); setNet(false); }
+  show("loading"); $("loadingTitle").textContent = "Connecting…"; $("loadingText").textContent = "";
+  let h = null;
+  try { h = await hello(); if (!h) return; }
+  catch (e) {                                   // no internet: use what is already on the phone
+    cfg = ls.get("cfg", cfg); blocked = new Set(ls.get("blocked", []));
+    if (!(await store.get("roster"))) { $("loadingTitle").textContent = "No connection"; $("loadingText").textContent = "Connect to the internet once to load the student list."; setTimeout(boot, 5000); return; }
   }
-  ls.set("queue", left); renderStats();
+  roster = await store.get("roster");
+  if (h && (!roster || (await store.get("packKey")) !== h.packKey)) {
+    if (!h.packReady) { $("loadingTitle").textContent = "Waiting for the admin"; $("loadingText").textContent = "The student list has not been uploaded yet. Retrying…"; setTimeout(boot, 15000); return; }
+    $("loadingTitle").textContent = "Loading the student list…"; $("loadingText").textContent = "About 10 MB, only once.";
+    const p = await api(link.u, { action: "gate.pack", code: link.c }, 120000);
+    if (p.revoked) return wipe(p.error);
+    if (!p.ok) { $("loadingText").textContent = p.error; setTimeout(boot, 15000); return; }
+    const pack = await decryptPack(b64u(p.b64.replace(/\+/g, "-").replace(/\//g, "_")), h.packKey);
+    roster = {}; for (const [id, name, course, photo] of pack.students) roster[id] = { id, name, course, photo };
+    await store.set("roster", roster); await store.set("packKey", h.packKey);
+  }
+  $("gateName").textContent = ls.get("gateName", link.n || "Gate");
+  $("manualRow").hidden = !cfg.allowManual;
+  setNet(!!h); stats(); show("scan");
+  cam = new QRCamera($("video"), t => handle(t, false));
+  cam.start().catch(() => addLog("Camera blocked: allow camera access for this page."));
+  flush();
 }
 
-/* ---------------- result screen */
-function showResult(kind, verdict, why, p, hint) {
+/* ---------------- gate switched off / code replaced: erase everything */
+async function wipe(why) {
+  cam?.stop(); await store.clear();
+  ["cfg", "blocked", "gateName", "queue", "seen"].forEach(ls.del);
+  $("lockedWhy").textContent = (why || "This gate is no longer active.") + " Student data on this phone has been erased.";
+  show("locked");
+}
+
+/* ---------------- scanning */
+let current = null;
+function result(kind, verdict, why, p, hint, canFlag) {
+  current = p;
   $("result").className = `result on ${kind}`;
   $("verdict").textContent = verdict; $("why").textContent = why || ""; $("hint").textContent = hint || "";
-  $("who").innerHTML = "";
   $("who").style.display = p ? "flex" : "none";
-  if (p) {
-    $("who").innerHTML = (p.photo ? `<img alt="" src="data:image/jpeg;base64,${p.photo}">` : `<div class="nophoto">NO PHOTO ON FILE<br>Check college ID card</div>`)
-      + `<div><b></b><code></code><span class="muted"></span></div>`;
-    $("who").querySelector("b").textContent = p.name;
-    $("who").querySelector("code").textContent = p.id;
-    $("who").querySelector(".muted").textContent = `Course code ${p.course}`;
-  }
+  $("who").innerHTML = p ? (p.photo ? `<img alt="" src="data:image/jpeg;base64,${p.photo}">` : `<div class="nophoto">NO PHOTO ON FILE<br>Check college ID card</div>`)
+    + `<div><b>${esc(p.name)}</b><code>${esc(p.id)}</code><span class="muted">Course code ${esc(p.course)}</span></div>` : "";
+  $("flag").hidden = !canFlag;
   navigator.vibrate?.(kind === "ok" ? 80 : [200, 80, 200]);
-  paused = true;
+  if (cam) cam.paused = true;
 }
-$("next").onclick = () => { $("result").className = "result"; paused = false; renderStats(); };
+$("next").onclick = () => { $("result").className = "result"; if (cam) cam.paused = false; stats(); };
+$("flag").onclick = async () => {
+  if (!current || !confirm(`Block ${current.name}'s pass? They will need to go to the SYNERGY desk.`)) return;
+  try { const r = await api(link.u, { action: "gate.flag", code: link.c, id: current.id, reason: "wrong person at gate" }); if (r.revoked) return wipe(r.error); blocked.add(current.id); addLog(`${nowIST()} BLOCKED ${current.id} (wrong person)`); }
+  catch { alert("No connection: tell the SYNERGY desk to block " + current.id); }
+  $("next").click();
+};
 
-async function handle(text, fromManual) {
-  let id;
-  if (fromManual) {
+async function handle(text, manual) {
+  let id, qr = null;
+  if (manual) {
     id = text.trim().toUpperCase();
-    if (!roster[id]) return showResult("bad", "NOT ON LIST", "No student with this ID.", null, "Do not allow entry.");
+    if (!/^UU\d{9}$/.test(id)) return result("bad", "NOT AN ID", "IDs look like UU26 followed by 7 digits.", null, "");
   } else {
-    const v = await verifyQR(text);
-    if (v.bad) return showResult("bad", "INVALID PASS", v.bad, null, "Do not allow entry.");
-    id = v.id;
+    const v = await verifyPass(text);
+    if (v.bad) { addLog(`${nowIST()} INVALID QR`); return result("bad", "INVALID PASS", v.bad, null, "Do not allow entry."); }
+    id = v.id; qr = v.text;
   }
-  const p = roster[id];
-  if (!p) return showResult("bad", "NOT ON LIST", "Genuine pass, but this ID is not in the gate pack.", null, "Send to the SYNERGY desk.");
-  const r = await record(p);
-  addLog(`${nowIST()} ${r.used ? "REFUSED (already used)" : "allowed"} · ${p.id} ${p.name}${fromManual ? " · typed" : ""}`);
-  if (r.used) return showResult("bad", "ALREADY USED", `This pass entered today at ${r.at}${r.gate ? ", " + r.gate : ""}.`, p, "Same pass twice, or a copy. Do not allow entry.");
-  showResult(p.photo ? "ok" : "warn", "ALLOW", r.offline ? "Recorded on this phone (no internet). Will sync." : "Entry recorded.", p,
-    p.photo ? "Match the face with the photo before letting them in." : "No photo on file: check their college ID card.");
+  const p = roster[id] || null;
+  if (!p) return result("bad", "NOT ON LIST", "This ID is not in the student list.", null, "Do not allow entry. Send to the SYNERGY desk.");
+  result("busy", "Checking…", "", p, "");
+  let r;
+  try { r = await api(link.u, manual ? { action: "gate.scan", code: link.c, id } : { action: "gate.scan", code: link.c, qr }, 8000); setNet(true); }
+  catch { setNet(false); return offline(p, qr, manual); }
+  if (r.revoked) return wipe(r.error);
+  if (!r.ok) return result("bad", "ERROR", r.error, p, "Try again, or send to the SYNERGY desk.");
+  const seen = ls.get("seen", {});
+  switch (r.status) {
+    case "admitted":
+      seen[`${today()}|${id}`] = nowIST(); ls.set("seen", seen);
+      addLog(`${nowIST()} allowed ${id}${manual ? " (typed)" : ""}`);
+      return result(manual || !p.photo ? "warn" : "ok", "ALLOW", manual ? "Typed ID: check the face very carefully." : "Entry recorded.", p,
+        p.photo ? "Match the face with the photo before letting them in." : "No photo on file: check their college ID card.", true);
+    case "used":     addLog(`${nowIST()} REFUSED used ${id}`); return result("bad", "ALREADY USED", `This pass entered today at ${r.time}, ${r.gate}.`, p, "Same pass twice, or a copy. Do not allow entry.");
+    case "blocked":  addLog(`${nowIST()} REFUSED blocked ${id}`); return result("bad", "BLOCKED PASS", r.note || "Blocked by the SYNERGY desk.", p, "Do not allow entry. Send to the SYNERGY desk.");
+    case "replaced": addLog(`${nowIST()} REFUSED old pass ${id}`); return result("bad", "OLD PASS", "This card was replaced by a new one (reported lost).", p, "Do not allow entry.");
+    case "manual_off": return result("bad", "TYPING IDs IS OFF", "The admin has switched off typed IDs.", p, "Ask them to show the QR pass.");
+    case "unknown":  return result("bad", "NOT ON LIST", "The server does not know this ID.", null, "Do not allow entry.");
+    default:         addLog(`${nowIST()} INVALID ${id}`); return result("bad", "INVALID PASS", "This QR was not issued by SYNERGY.", null, "Do not allow entry.");
+  }
 }
 
-/* ---------------- camera + QR reading */
-let stream = null, paused = false, raf = 0;
-const canvas = document.createElement("canvas"), ctx = canvas.getContext("2d", { willReadFrequently: true });
-const detector = "BarcodeDetector" in window ? new BarcodeDetector({ formats: ["qr_code"] }) : null;
-async function startCam() {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 1280 } }, audio: false });
-    $("video").srcObject = stream; await $("video").play(); tick();
-  } catch (e) { addLog("Camera blocked: allow camera access for this page, or type IDs below."); }
+/* ---------------- no internet */
+function offline(p, qr, manual) {
+  if (!cfg.allowOffline) return result("bad", "NO CONNECTION", "Cannot check this pass with the other gates.", p, "Do not admit yet. Fix the internet, or send them to another gate.");
+  if (blocked.has(p.id)) return result("bad", "BLOCKED PASS", "Blocked by the SYNERGY desk.", p, "Do not allow entry.");
+  const seen = ls.get("seen", {}), k = `${today()}|${p.id}`;
+  if (seen[k]) return result("bad", "ALREADY USED", `Already entered at this gate today at ${seen[k]}.`, p, "Do not allow entry.");
+  seen[k] = nowIST(); ls.set("seen", seen);
+  const q = ls.get("queue", []); q.push(manual ? { id: p.id } : { qr }); ls.set("queue", q);
+  addLog(`${nowIST()} allowed OFFLINE ${p.id}`);
+  return result("warn", "ALLOW (OFFLINE)", "No internet: checked on this phone only. Will sync.", p, "Check the face, and their college ID card.", false);
 }
-function stopCam() { cancelAnimationFrame(raf); stream?.getTracks().forEach(t => t.stop()); stream = null; }
-let busy = false, last = "", lastAt = 0;
-async function tick() {
-  raf = requestAnimationFrame(tick);
-  const v = $("video"); if (paused || busy || v.readyState < 2) return;
-  busy = true;
-  try {
-    let text = null;
-    if (detector) { const c = await detector.detect(v); text = c[0]?.rawValue || null; }
-    else {
-      const s = Math.min(v.videoWidth, v.videoHeight), side = Math.min(720, s);
-      canvas.width = canvas.height = side;
-      ctx.drawImage(v, (v.videoWidth - s) / 2, (v.videoHeight - s) / 2, s, s, 0, 0, side, side);
-      const q = jsQR(ctx.getImageData(0, 0, side, side).data, side, side, { inversionAttempts: "dontInvert" });
-      text = q?.data || null;
-    }
-    if (text && !(text === last && Date.now() - lastAt < 3000)) { last = text; lastAt = Date.now(); await handle(text, false); }
-  } catch {}
-  busy = false;
+async function flush() {
+  const q = ls.get("queue", []); if (!q.length || !link) return stats();
+  const left = [];
+  for (const e of q) {
+    try { const r = await api(link.u, { action: "gate.scan", code: link.c, ...e }, 8000); if (r.revoked) return wipe(r.error); if (!r.ok) left.push(e); else { setNet(true); if (r.status === "used") addLog(`Sync: ${r.id} had already entered at ${r.gate} (${r.time})`); } }
+    catch { left.push(e); setNet(false); }
+  }
+  ls.set("queue", left); stats();
 }
-$("manualGo").onclick = () => { const v = $("manual").value; if (v.trim()) { $("manual").value = ""; handle(v, true); } };
-$("manual").onkeydown = e => { if (e.key === "Enter") $("manualGo").click(); };
 
-/* ---------------- status */
-function setNet(on) { $("net").className = `pill ${on ? "on" : "off"}`; $("net").textContent = sync?.url ? (on ? "Synced" : "Offline") : "This phone only"; }
-function renderStats() {
-  const today = dayKey(), n = Object.keys(localLog()).filter(k => k.startsWith(today)).length, q = ls.get("queue", []).length;
-  $("countToday").textContent = `${n} ${n === 1 ? "entry" : "entries"} today on this phone`;
-  $("queue").textContent = q ? `${q} waiting to sync` : "";
+/* ---------------- status, heartbeat */
+function setNet(on) { $("net").className = `pill ${on ? "on" : "off"}`; $("net").textContent = on ? "Online" : "Offline"; }
+function stats() {
+  const n = Object.keys(ls.get("seen", {})).filter(k => k.startsWith(today())).length, q = ls.get("queue", []).length;
+  $("countToday").textContent = `${n} admitted here today`; $("queue").textContent = q ? `${q} waiting to sync` : "";
 }
 function addLog(t) { const d = document.createElement("div"); d.textContent = t; $("log").prepend(d); }
-function show(id) { document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id)); }
-async function start() {
-  roster = await kv.get("roster"); sync = await kv.get("sync");
-  if (!roster) return show("setup");
-  $("gateName").textContent = ls.get("gate", "Gate");
-  setNet(navigator.onLine); renderStats(); show("scan"); startCam(); flushQueue();
-}
-addEventListener("online", flushQueue);
-setInterval(flushQueue, 30000);
-start();
+$("manualGo").onclick = () => { const v = $("manual").value; if (v.trim()) { $("manual").value = ""; handle(v, true); } };
+$("manual").onkeydown = e => { if (e.key === "Enter") $("manualGo").click(); };
+setInterval(async () => {                      // every 30 s: settings, blocked list, gate still on?
+  if (!link || !roster) return;
+  try { const h = await hello(); if (h) { setNet(true); $("manualRow").hidden = !cfg.allowManual; $("gateName").textContent = h.gate; flush(); } }
+  catch { setNet(false); }
+}, 30000);
+addEventListener("online", flush);
+boot();
 </script>
 </body>
 </html>

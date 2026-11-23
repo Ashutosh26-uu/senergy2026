@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#07060b">
+<title>SYNERGY 2026 · Gate admin</title>
+<style>
+  :root { --bg:#07060b; --card:#14111f; --line:rgba(255,255,255,.12); --ink:#f4f1fa; --muted:#a9a3b8; --ok:#16c172; --bad:#ff3b4e; --warn:#ffb547; --cyan:#29e0ff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  button, input { font: inherit; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 18px 16px 60px; }
+  h1 { margin: 0; font-size: 1.3rem; } h2 { margin: 0 0 12px; font-size: 1.05rem; }
+  .muted { color: var(--muted); } .small { font-size: .82rem; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+  input[type=text], input[type=password], input[type=url], input:not([type]) { width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--line); background: #0d0b16; color: var(--ink); }
+  .btn { padding: 10px 14px; border: 0; border-radius: 10px; background: linear-gradient(100deg,#ff2e88,#a35cff 45%,#29e0ff); color: #fff; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .btn.ghost { background: #0d0b16; border: 1px solid var(--line); font-weight: 600; }
+  .btn.danger { background: #5a1019; border: 1px solid var(--bad); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; } .row > input { flex: 1; min-width: 180px; }
+  .err { color: var(--bad); font-weight: 600; min-height: 1.2em; }
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tabs button { padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; font-weight: 600; }
+  .tabs button[aria-pressed=true] { background: linear-gradient(100deg,#ff2e88,#a35cff 45%,#29e0ff); border-color: transparent; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .stat b { display: block; font-size: 2rem; } .stat span { color: var(--muted); font-size: .85rem; }
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; } th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: .75rem; font-weight: 700; }
+  .tag.on { background: rgba(22,193,114,.18); color: var(--ok); } .tag.off { background: rgba(255,59,78,.18); color: var(--bad); }
+  .panel { display: none; flex-direction: column; gap: 14px; } .panel.on { display: flex; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: none; place-items: center; padding: 16px; z-index: 5; }
+  .modal.on { display: grid; }
+  .modal .card { max-width: 420px; width: 100%; text-align: center; }
+  .qrbox { background: #fff; border-radius: 12px; padding: 14px; display: inline-block; margin: 10px 0; }
+  .qrbox svg, .qrbox img { display: block; width: 260px; height: 260px; }
+  .code { word-break: break-all; font-family: ui-monospace, Consolas, monospace; font-size: .72rem; background: #0d0b16; border-radius: 8px; padding: 8px; text-align: left; }
+  .switch { display: flex; gap: 12px; align-items: flex-start; } .switch input { width: 22px; height: 22px; margin-top: 2px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- login -->
+  <section id="login" class="card" style="max-width:460px;margin:8vh auto;display:grid;gap:12px">
+    <h1>SYNERGY 2026 · Gate admin</h1>
+    <label class="small muted">Gate server URL (from the Apps Script deployment, ends in /exec)<input id="url" type="url" placeholder="https://script.google.com/macros/s/…/exec"></label>
+    <label class="small muted">Admin password<input id="pw" type="password" autocomplete="current-password"></label>
+    <button class="btn" id="loginGo">Log in</button>
+    <p class="err" id="loginErr"></p>
+  </section>
+
+  <!-- app -->
+  <section id="app" hidden>
+    <div class="top"><h1>SYNERGY 2026 · Gate admin</h1><div class="row"><span class="muted small" id="updated"></span><button class="btn ghost" id="logout">Log out</button></div></div>
+    <div class="tabs" role="group">
+      <button data-tab="overview" aria-pressed="true">Overview</button>
+      <button data-tab="gates" aria-pressed="false">Gates</button>
+      <button data-tab="passes" aria-pressed="false">Passes</button>
+      <button data-tab="data" aria-pressed="false">Student data</button>
+      <button data-tab="settings" aria-pressed="false">Settings</button>
+    </div>
+
+    <div class="panel on" id="overview">
+      <div class="grid">
+        <div class="card stat"><b id="sToday">0</b><span>entries today</span></div>
+        <div class="card stat"><b id="sGates">0</b><span>gates switched on</span></div>
+        <div class="card stat"><b id="sRoster">0</b><span>passes on the roster</span></div>
+        <div class="card stat"><b id="sBlocked">0</b><span>blocked passes</span></div>
+      </div>
+      <div class="card" id="setupWarn" hidden></div>
+      <div class="card"><h2>Today by gate</h2><table id="perGate"></table></div>
+      <div class="card"><h2>Latest entries</h2><table id="recent"></table></div>
+      <div class="card"><h2>Activity log</h2><table id="log"></table></div>
+    </div>
+
+    <div class="panel" id="gates">
+      <div class="card"><h2>Add a gate</h2>
+        <div class="row"><input id="gateName" placeholder="e.g. Gate 1, Main Gate, Back Gate"><button class="btn" id="gateAdd">Create gate</button></div>
+        <p class="small muted">Each gate gets a secret code, shown once as a QR. Scan it with the guard's phone at <b id="gateUrl"></b>. Switching a gate off locks that phone at once and erases the student data on it.</p>
+      </div>
+      <div class="card"><table id="gateTable"></table></div>
+    </div>
+
+    <div class="panel" id="passes">
+      <div class="card"><h2>Find a pass</h2>
+        <div class="row"><input id="q" placeholder="ID or name"><button class="btn" id="find">Search</button></div>
+        <p class="small muted"><b>Block</b>: lost card, misuse, or wrong person; it is refused at every gate. <b>Allow re-entry</b>: clears today's entry so they can come in once more. For a <b>lost card</b>, block it, then re-issue a new card with the pass maker (<code>--reissue ID</code>) and import the new roster: the old card then shows "OLD PASS".</p>
+      </div>
+      <div class="card"><table id="passTable"><tr><td class="muted">Search above.</td></tr></table></div>
+    </div>
+
+    <div class="panel" id="data">
+      <div class="card"><h2>1. Roster (what the server checks)</h2>
+        <p class="small muted">Upload <code>output\roster-server.json</code> from the pass maker. Upload it again after every re-issue. Blocked passes stay blocked.</p>
+        <div class="row"><input type="file" id="rosterFile" accept=".json"><button class="btn" id="rosterGo">Import roster</button></div>
+        <p class="small" id="rosterMsg"></p>
+      </div>
+      <div class="card"><h2>2. Gate pack (names and photos for the gate phones)</h2>
+        <p class="small muted">Upload <code>output\gate-pack.syn</code> and paste the key from <code>keys\pack-key.txt</code>. It is stored privately in your Google Drive; only switched-on gates can download it.</p>
+        <div class="row"><input type="file" id="packFile" accept=".syn"><input id="packKey" placeholder="Pack key"><button class="btn" id="packGo">Upload pack</button></div>
+        <p class="small" id="packMsg"></p>
+      </div>
+    </div>
+
+    <div class="panel" id="settings">
+      <div class="card" style="display:grid;gap:16px">
+        <label class="switch"><input type="checkbox" id="optOffline"><span><b>Allow entry when a gate has no internet</b><br><span class="small muted">Off (safest): a gate without internet refuses everyone until it reconnects, so no pass can be used twice at different gates. On: the gate admits on its own check and syncs later; the same pass could slip in once more at another offline gate.</span></span></label>
+        <label class="switch"><input type="checkbox" id="optManual"><span><b>Allow typing an ID for damaged cards</b><br><span class="small muted">The guard still sees the photo, and the entry is marked "typed ID". Turn off if typed IDs are being misused.</span></span></label>
+        <p class="small muted">The admin password is changed in the Google Sheet: SYNERGY menu → Set admin password. That also signs everyone out.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="modal" id="modal"><div class="card">
+  <h2 id="mTitle"></h2>
+  <div class="qrbox" id="mQR"></div>
+  <p class="small muted">On the guard's phone open the gate page and scan this. It is shown <b>only now</b>; if it is lost, use "New code".</p>
+  <div class="code" id="mCode"></div>
+  <div class="row" style="justify-content:center;margin-top:12px"><button class="btn ghost" id="mCopy">Copy code</button><button class="btn" id="mClose">Done</button></div>
+</div></div>
+
+<script src="vendor/qrcode.js"></script>
+<script type="module">
+import { api, packSetup, esc } from "./common.js";
+const $ = id => document.getElementById(id);
+const gatePage = new URL("./", location.href).href;
+let url = localStorage.getItem("synergy-admin-url") || "", session = sessionStorage.getItem("synergy-admin-session") || "";
+
+async function call(action, body = {}, t) {
+  const r = await api(url, { action, session, ...body }, t);
+  if (r.signedOut) { session = ""; sessionStorage.removeItem("synergy-admin-session"); showLogin("Signed out. Log in again."); throw new Error("signed out"); }
+  return r;
+}
+function showLogin(msg) { $("app").hidden = true; $("login").hidden = false; $("url").value = url; $("loginErr").textContent = msg || ""; }
+$("loginGo").onclick = async () => {
+  url = $("url").value.trim();
+  if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(url))  // local address: testing only return ($("loginErr").textContent = "Paste the Apps Script web app URL (https://script.google.com/…/exec).");
+  $("loginGo").disabled = true; $("loginErr").textContent = "";
+  try {
+    const r = await api(url, { action: "admin.login", password: $("pw").value });
+    if (!r.ok) throw new Error(r.error);
+    session = r.session; sessionStorage.setItem("synergy-admin-session", session); localStorage.setItem("synergy-admin-url", url);
+    $("pw").value = ""; start();
+  } catch (e) { $("loginErr").textContent = e.message === "Failed to fetch" ? "Cannot reach the server. Check the URL." : e.message; }
+  $("loginGo").disabled = false;
+};
+$("pw").onkeydown = e => { if (e.key === "Enter") $("loginGo").click(); };
+$("logout").onclick = async () => { try { await call("admin.logout"); } catch {} session = ""; sessionStorage.removeItem("synergy-admin-session"); showLogin(); };
+
+/* tabs */
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === b.dataset.tab));
+});
+
+/* overview (refreshes every 10 s) */
+const table = (el, head, rows) => { $(el).innerHTML = `<tr>${head.map(h => `<th>${h}</th>`).join("")}</tr>` + (rows.length ? rows.join("") : `<tr><td class="muted" colspan="${head.length}">Nothing yet.</td></tr>`); };
+async function refresh() {
+  if (!session) return;
+  let d; try { d = await call("admin.dashboard"); } catch { return; }
+  if (!d.ok) return;
+  $("sToday").textContent = d.entriesToday; $("sRoster").textContent = d.rosterSize; $("sBlocked").textContent = d.blocked;
+  $("sGates").textContent = d.gates.filter(g => g.active).length;
+  const warn = [];
+  if (!d.rosterSize) warn.push("Import the roster (Student data → 1). Until then every pass shows NOT ON LIST.");
+  if (!d.packUploaded) warn.push("Upload the gate pack (Student data → 2). Until then gate phones cannot load photos.");
+  if (!d.gates.length) warn.push("Create your gates (Gates tab).");
+  $("setupWarn").hidden = !warn.length; $("setupWarn").innerHTML = "<b>To finish setting up:</b><br>" + warn.map(esc).join("<br>");
+  table("perGate", ["Gate", "Entries today"], Object.entries(d.perGate).map(([g, n]) => `<tr><td>${esc(g)}</td><td>${n}</td></tr>`));
+  table("recent", ["Time", "Day", "ID", "Name", "Gate", "How"], d.recent.map(r => `<tr><td>${esc(r.time)}</td><td>${esc(r.day)}</td><td>${esc(r.id)}</td><td>${esc(r.name)}</td><td>${esc(r.gate)}</td><td>${esc(r.method)}</td></tr>`));
+  table("log", ["Time", "Who", "What", "Detail"], d.log.map(r => `<tr><td>${esc(r.time)}</td><td>${esc(r.who)}</td><td>${esc(r.action)}</td><td>${esc(r.detail)}</td></tr>`));
+  $("optOffline").checked = d.config.allowOffline; $("optManual").checked = d.config.allowManual;
+  drawGates(d.gates);
+  $("updated").textContent = "Updated " + new Date().toLocaleTimeString();
+}
+
+/* gates */
+function drawGates(gates) {
+  table("gateTable", ["Gate", "Status", "Last seen", ""], gates.map(g => `<tr><td><b>${esc(g.name)}</b></td>
+    <td><span class="tag ${g.active ? "on" : "off"}">${g.active ? "On" : "Off"}</span></td><td class="small">${esc(g.lastSeen || "never")}</td>
+    <td class="row"><button class="btn ghost" data-act="toggle" data-id="${esc(g.id)}" data-on="${g.active}">${g.active ? "Switch off" : "Switch on"}</button>
+    <button class="btn ghost" data-act="code" data-id="${esc(g.id)}" data-name="${esc(g.name)}">New code</button>
+    <button class="btn danger" data-act="del" data-id="${esc(g.id)}" data-name="${esc(g.name)}">Delete</button></td></tr>`));
+}
+function showCode(name, code) {
+  const text = packSetup(url, code, name);
+  const qr = qrcode(0, "M"); qr.addData(text); qr.make();
+  $("mTitle").textContent = name; $("mQR").innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true }); $("mCode").textContent = text;
+  $("mCopy").onclick = () => navigator.clipboard.writeText(text).then(() => ($("mCopy").textContent = "Copied"));
+  $("modal").classList.add("on");
+}
+$("mClose").onclick = () => { $("modal").classList.remove("on"); $("mCode").textContent = ""; $("mQR").innerHTML = ""; $("mCopy").textContent = "Copy code"; };
+$("gateAdd").onclick = async () => {
+  const name = $("gateName").value.trim(); if (!name) return;
+  const r = await call("admin.gateCreate", { name }); if (!r.ok) return alert(r.error);
+  $("gateName").value = ""; showCode(r.gate.name, r.code); refresh();
+};
+$("gateTable").onclick = async e => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  if (b.dataset.act === "toggle") { await call("admin.gateActive", { id: b.dataset.id, active: b.dataset.on !== "true" }); }
+  if (b.dataset.act === "code" && confirm(`Replace ${b.dataset.name}'s code? The phone using the old code is locked out.`)) { const r = await call("admin.gateNewCode", { id: b.dataset.id }); if (r.ok) showCode(b.dataset.name, r.code); }
+  if (b.dataset.act === "del" && confirm(`Delete ${b.dataset.name}? Its phone is locked out. Past entries stay in the sheet.`)) { await call("admin.gateDelete", { id: b.dataset.id }); }
+  refresh();
+};
+
+/* passes */
+async function find() {
+  const r = await call("admin.passFind", { q: $("q").value }); if (!r.ok) return alert(r.error);
+  table("passTable", ["Pass", "Status", "Entries", ""], r.passes.map(p => `<tr><td><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.id)} · course ${esc(p.course)} · v${esc(p.version)}</span></td>
+    <td><span class="tag ${p.status === "blocked" ? "off" : "on"}">${p.status === "blocked" ? "Blocked" : "Active"}</span>${p.note ? `<br><span class="small muted">${esc(p.note)}</span>` : ""}</td>
+    <td class="small">${p.entries.map(e => `${esc(e.day)} ${esc(e.time)} · ${esc(e.gate)}${e.method === "typed ID" ? " (typed)" : ""}`).join("<br>") || "none"}</td>
+    <td class="row">${p.status === "blocked" ? `<button class="btn ghost" data-act="unblock" data-id="${esc(p.id)}">Unblock</button>` : `<button class="btn danger" data-act="block" data-id="${esc(p.id)}">Block</button>`}
+    <button class="btn ghost" data-act="readmit" data-id="${esc(p.id)}">Allow re-entry</button></td></tr>`));
+}
+$("find").onclick = find; $("q").onkeydown = e => { if (e.key === "Enter") find(); };
+$("passTable").onclick = async e => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const id = b.dataset.id; let r;
+  if (b.dataset.act === "block") { const note = prompt("Reason (e.g. lost card, misuse):", "lost card"); if (note === null) return; r = await call("admin.passBlock", { id, note }); }
+  if (b.dataset.act === "unblock") r = await call("admin.passUnblock", { id });
+  if (b.dataset.act === "readmit") { const note = prompt("Why may they enter again today?", "went out and came back"); if (note === null) return; r = await call("admin.passReadmit", { id, note }); }
+  if (r && !r.ok) alert(r.error);
+  find(); refresh();
+};
+
+/* student data */
+$("rosterGo").onclick = async () => {
+  const f = $("rosterFile").files[0]; if (!f) return;
+  $("rosterMsg").textContent = "Importing…";
+  try { const rows = JSON.parse(await f.text()); const r = await call("admin.rosterImport", { rows }, 120000); $("rosterMsg").textContent = r.ok ? `Done: ${r.added} added, ${r.updated} updated.` : r.error; }
+  catch (e) { $("rosterMsg").textContent = "Could not read that file: " + e.message; }
+  refresh();
+};
+$("packGo").onclick = async () => {
+  const f = $("packFile").files[0], key = $("packKey").value.trim(); if (!f || !key) return ($("packMsg").textContent = "Choose the file and paste the key.");
+  $("packMsg").textContent = "Uploading (about 10 MB)…";
+  const bytes = new Uint8Array(await f.arrayBuffer()); let s = ""; for (let i = 0; i < bytes.length; i += 32768) s += String.fromCharCode(...bytes.subarray(i, i + 32768));
+  try { const r = await call("admin.packUpload", { b64: btoa(s), key }, 180000); $("packMsg").textContent = r.ok ? "Uploaded. Gate phones load it on their next start." : r.error; $("packKey").value = ""; }
+  catch (e) { $("packMsg").textContent = e.message; }
+  refresh();
+};
+
+/* settings */
+$("optOffline").onchange = e => call("admin.config", { allowOffline: e.target.checked });
+$("optManual").onchange = e => call("admin.config", { allowManual: e.target.checked });
+
+function start() { $("login").hidden = true; $("app").hidden = false; $("gateUrl").textContent = gatePage; refresh(); }
+setInterval(refresh, 10000);
+if (url && session) start(); else showLogin();
+</script>
+</body>
+</html>
