@@ -127,8 +127,9 @@
   .result.on { display:flex; animation:pop .28s cubic-bezier(.2,.9,.3,1.2); }
   @keyframes pop { from { opacity:0; transform:scale(.96); } }
   .result.check .actions { position:sticky; bottom:calc(-18px - var(--safe-b)); margin:0 -18px calc(-18px - var(--safe-b)); padding:12px 18px calc(14px + var(--safe-b)); background:linear-gradient(transparent, rgba(7,6,11,.97) 22%); width:calc(100% + 36px); max-width:none; }
-  .result.check .who .pics img, .result.check .who .pics .nophoto { width:min(132px,34vw); border-radius:14px; }
-  .result.check .who .ph.card img { width:min(250px,64vw); }
+  .result.check .who .pics img, .result.check .who .pics .nophoto { width:min(118px,31vw); border-radius:14px; }
+  .result.check { gap:8px; } .result.check .verdict { font-size:1.9rem; margin:0; } .result.check .why { margin:0; }
+  .result.check .who .ph.card img { width:min(215px,56vw); }
   .result.check .who b { font-size:1.2rem; } .result.check #next { padding:10px; font-size:.9rem; background:transparent; color:#fff; border:1px solid rgba(255,255,255,.28); border-radius:999px; }
   .result.check .hint { font-size:.85rem; }
   .result.check { background:radial-gradient(40% 30% at 15% 8%,rgba(255,46,136,.32),transparent 70%),radial-gradient(45% 35% at 90% 18%,rgba(41,224,255,.22),transparent 70%),radial-gradient(55% 40% at 50% 100%,rgba(163,92,255,.28),transparent 70%),#07060b; }   /* the website colours */
@@ -141,6 +142,8 @@
   .result.busy { background:radial-gradient(120% 80% at 50% 0%,#2c2060,#0d0a1d 70%); }
   @keyframes shake { 20%,60% { transform:translateX(-10px); } 40%,80% { transform:translateX(10px); } }
   .badge { width:84px; height:84px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.14); border:2px solid rgba(255,255,255,.5); margin-top:4px; }
+  .result.check .badge { width:auto; height:auto; border-radius:0; background:none; border:0; margin-top:0; }
+  .verify-logo { width:min(118px,32vw); height:auto; border-radius:14px; box-shadow:0 14px 40px -12px rgba(255,46,136,.6); }
   .badge svg { width:46px; height:46px; stroke:#fff; stroke-width:5; fill:none; stroke-linecap:round; stroke-linejoin:round; }
   .badge path { stroke-dasharray:60; stroke-dashoffset:60; animation:draw .45s .1s ease-out forwards; }
   @keyframes draw { to { stroke-dashoffset:0; } }
@@ -384,7 +387,7 @@ const ICON = {
   warn: '<svg viewBox="0 0 48 48"><path d="M24 12v15M24 35v.5"/></svg>',
   bad: '<svg viewBox="0 0 48 48"><path d="M15 15l18 18M33 15L15 33"/></svg>',
   out: '<svg viewBox="0 0 48 48"><path d="M14 24h20M26 15l9 9-9 9"/></svg>',
-  check: '<svg viewBox="0 0 48 48"><path d="M6 24s7-11 18-11 18 11 18 11-7 11-18 11S6 24 6 24z"/><circle cx="24" cy="24" r="5"/></svg>',
+  check: '<img class="verify-logo" src="../assets/img/synergy-2026.svg" alt="SYNERGY 2026">',
   busy: "",
 };
 let current = null, autoTimer = 0, held = false, verified = false, pending = null;
