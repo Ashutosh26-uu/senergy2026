@@ -147,6 +147,9 @@
   .who figure { margin:0; display:flex; flex-direction:column; align-items:center; gap:4px; }
   .who figcaption { font-size:.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.8); }
   .who .pics img, .who .pics .nophoto { width:min(168px,42vw); border-radius:18px; }
+  .who .ph.card img { width:min(340px,86vw); aspect-ratio:1.586; border-radius:12px; border-width:3px; }
+  .zoom { position:fixed; inset:0; z-index:90; background:rgba(0,0,0,.94); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; padding:16px; }
+  .zoom img { max-width:100%; max-height:84vh; border-radius:12px; } .zoom span { color:#fff; font-weight:700; opacity:.8; }
   .who .nophoto.wide { width:100%; aspect-ratio:auto; padding:10px; border-radius:14px; }
   .who .nophoto { display:grid; place-items:center; padding:16px; font-weight:800; color:var(--warn); font-size:.95rem; border-style:dashed; }
   .who b { font-size:1.45rem; line-height:1.2; }
@@ -384,6 +387,7 @@ function result(kind, verdict, why, p, hint, canFlag) {
   $("who").hidden = !p;
   const pic = (b64, label) => `<figure class="ph">${b64 ? `<img alt="" src="data:image/jpeg;base64,${b64}">` : `<div class="nophoto">${label === "Selfie" ? "NO SELFIE" : "NO UNIVERSITY PHOTO"}</div>`}<figcaption>${label}</figcaption></figure>`;
   $("who").innerHTML = p ? `<div class="pics">${pic(p.selfie, "Selfie")}${pic(p.photo, "University photo")}</div>`
+    + (p.card ? `<figure class="ph card"><img alt="" src="data:image/jpeg;base64,${p.card}"><figcaption>College ID card · tap any photo to zoom</figcaption></figure>` : "")
     + (!p.photo && !p.selfie ? `<div class="nophoto wide">No photo at all: check their college ID card very carefully</div>` : "")
     + `
     <b>${esc(p.name)}</b><div class="meta"><span class="chip mono">${esc(p.id)}</span><span class="chip">Course ${esc(p.course)}</span></div>` : "";
@@ -397,6 +401,11 @@ function result(kind, verdict, why, p, hint, canFlag) {
   if (kind !== "busy") { navigator.vibrate?.(kind === "ok" || kind === "out" ? 80 : [220, 80, 220]); tone(kind === "out" ? "ok" : kind); }
   if (cam) { cam.paused = true; $("camBox").classList.add("paused"); }
 }
+$("who").addEventListener("click", e => {                 // tap a photo: full screen, to read the ID card or check a face
+  const im = e.target.closest("img"); if (!im) return;
+  const z = document.createElement("div"); z.className = "zoom"; z.innerHTML = `<img alt="" src="${im.src}"><span>Tap to close</span>`;
+  z.onclick = () => z.remove(); document.body.appendChild(z);
+});
 $("who").onclick = () => { if (!$("auto").hidden && !held) { held = true; clearTimeout(autoTimer); $("auto").classList.remove("run"); $("autoNote").textContent = "Held · tap Next scan when done"; } };
 $("next").onclick = () => {
   clearTimeout(autoTimer); $("result").className = "result"; $("autoNote").textContent = "Next scan starts automatically · tap the photo to hold";
@@ -431,7 +440,7 @@ async function handle(text, manual) {
   try { r = await api(link.u, manual ? { action: "gate.scan", code: link.c, id } : { action: "gate.scan", code: link.c, qr }, 8000); setNet(true); }
   catch { setNet(false); return offline(p); }
   if (r.revoked) return wipe(r.error);
-  if (r.person) p = { ...p, name: r.person.name || p.name, course: r.person.course || p.course, photo: r.person.photo, selfie: r.person.selfie };
+  if (r.person) p = { ...p, name: r.person.name || p.name, course: r.person.course || p.course, photo: r.person.photo, selfie: r.person.selfie, card: r.person.card };
   if (!r.ok) return result("bad", "ERROR", r.error, p, "Try again, or send to the SYNERGY desk.");
   const seen = ls.get("seen", {});
   switch (r.status) {
@@ -440,7 +449,7 @@ async function handle(text, manual) {
       addLog(manual || !(p.photo || p.selfie) ? "warn" : "ok", `${p.name}${r.reentry ? " · re-entry" : ""}${manual ? " · typed ID" : ""}`);
       return result(manual || !(p.photo || p.selfie) ? "warn" : "ok", r.reentry ? "WELCOME BACK" : "ALLOW",
         manual ? "Typed ID: check the face very carefully." : r.reentry ? `Re-entry recorded (entry ${r.entries} today).` : `Entry to ${place()} recorded.`, p,
-        p.selfie || p.photo ? "Match the face with the SELFIE. If the university photo is a real photo, it must match too. Ask for the college ID card." : "No photo on file: check their college ID card.", true);
+        p.selfie || p.photo ? "Match the face with the SELFIE. If the university photo is a real photo, it must match too. The ID card they show must match the card photo." : "No photo on file: check their college ID card.", true);
     case "exited":
       seen[`${today()}|${id}|out|${Date.now()}`] = nowIST(); ls.set("seen", seen);
       addLog("ok", `${p.name} · went out`);

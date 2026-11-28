@@ -97,51 +97,62 @@ async function askServer(body) {
 }
 const ID_OK = /^UU(?:\d{9}|-?PG\d{6,7})$/;
 
-/* ---------- live camera: the face goes in the oval, the photo is cropped to it ---------- */
-function SelfieCam({ onPhoto, onCancel }) {
+/* ---------- live camera: the face goes in the oval / the ID card in the frame, the photo is cropped to it ---------- */
+const CAM = {
+  face: { facing: "user", box: 0.8, out: [300, 375], max: 58000, mirror: true,
+    title: <>Step 1 of 2 · Take a clear photo of <b>your own face</b>. The gate shows it to the guard.</>, tip: "Face in the oval · no cap or mask · good light" },
+  card: { facing: "environment", box: 4 / 3, out: [560, 353], max: 86000, mirror: false,
+    title: <>Step 2 of 2 · Now a photo of <b>your college ID card</b> (front side, with your photo).</>, tip: "Whole card inside the frame · no glare · text readable" },
+};
+function PhotoCam({ mode, onPhoto, onCancel }) {
+  const M = CAM[mode];
   const video = useRef(), [err, setErr] = useState(""), [shot, setShot] = useState(null), [warn, setWarn] = useState(""), [bad, setBad] = useState(false);
   useEffect(() => {
     let stream, stop = false;
     (async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false });
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: M.facing }, width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false });
         if (stop) return stream.getTracks().forEach(t => t.stop());
         video.current.srcObject = stream; await video.current.play();
       } catch { setErr("Camera blocked. Allow the camera for this site in your browser settings, then try again."); }
     })();
     return () => { stop = true; stream?.getTracks().forEach(t => t.stop()); };
-  }, []);
+  }, [M.facing]);
   const capture = async () => {
     const v = video.current; if (!v || v.videoWidth < 160) return setWarn("The camera is still starting. Try again in a moment.");
-    const vw = v.videoWidth, vh = v.videoHeight;
-    // the part of the frame visible in the 4:5 box (object-fit: cover), then the oval inside it
-    let sw, sh, sx, sy; if (vw / vh > 0.8) { sh = vh; sw = vh * 0.8; sx = (vw - sw) / 2; sy = 0; } else { sw = vw; sh = vw / 0.8; sx = 0; sy = (vh - sh) / 2; }
-    let cw = sw * 0.78, ch = cw * 1.25, cx = sx + (sw - cw) / 2, cy = sy + sh * 0.47 - ch / 2;
-    try {                                                           // where the browser can find the face, centre on it
-      if ("FaceDetector" in window) {
-        const f = (await new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 }).detect(v))[0];
-        if (f) { const b = f.boundingBox; ch = Math.min(vh, b.height * 2.1); cw = ch * 0.8; cx = b.x + b.width / 2 - cw / 2; cy = b.y + b.height * 0.42 - ch / 2; }
-      }
-    } catch { /* no face detector: the oval crop is used */ }
+    const vw = v.videoWidth, vh = v.videoHeight, R = M.box;
+    // the part of the frame visible in the box (object-fit: cover), then the guide inside it
+    let sw, sh, sx, sy; if (vw / vh > R) { sh = vh; sw = vh * R; sx = (vw - sw) / 2; sy = 0; } else { sw = vw; sh = vw / R; sx = 0; sy = (vh - sh) / 2; }
+    let cw, ch, cx, cy;
+    if (mode === "face") {
+      cw = sw * 0.78; ch = cw * 1.25; cx = sx + (sw - cw) / 2; cy = sy + sh * 0.47 - ch / 2;
+      try {                                                         // where the browser can find the face, centre on it
+        if ("FaceDetector" in window) {
+          const f = (await new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 }).detect(v))[0];
+          if (f) { const b = f.boundingBox; ch = Math.min(vh, b.height * 2.1); cw = ch * 0.8; cx = b.x + b.width / 2 - cw / 2; cy = b.y + b.height * 0.42 - ch / 2; }
+        }
+      } catch { /* no face detector: the oval crop is used */ }
+    } else { cw = sw * 0.9; ch = cw / 1.586; cx = sx + (sw - cw) / 2; cy = sy + (sh - ch) / 2; }
     cx = Math.max(0, Math.min(vw - cw, cx)); cy = Math.max(0, Math.min(vh - ch, cy));
-    const c = document.createElement("canvas"); c.width = 300; c.height = 375;
-    const x = c.getContext("2d"); x.drawImage(v, cx, cy, cw, ch, 0, 0, 300, 375);
-    const px = x.getImageData(60, 60, 180, 220).data; let sum = 0; for (let i = 0; i < px.length; i += 16) sum += px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11;
+    const [W, H] = M.out, c = document.createElement("canvas"); c.width = W; c.height = H;
+    const x = c.getContext("2d"); x.drawImage(v, cx, cy, cw, ch, 0, 0, W, H);
+    const px = x.getImageData(W * 0.2, H * 0.2, W * 0.6, H * 0.6).data; let sum = 0; for (let i = 0; i < px.length; i += 16) sum += px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11;
     const light = sum / (px.length / 16);
     setBad(light < 30 || light > 245);
     setWarn(light < 55 ? "Too dark: face a light or a window and take it again." : light > 235 ? "Too bright: step away from the light and take it again." : "");
-    let q = 0.78, url = c.toDataURL("image/jpeg", q);
-    while (url.length > 58000 && q > 0.4) { q -= 0.08; url = c.toDataURL("image/jpeg", q); }
+    let q = 0.8, url = c.toDataURL("image/jpeg", q);
+    while (url.length > M.max && q > 0.4) { q -= 0.08; url = c.toDataURL("image/jpeg", q); }
     setShot(url);
   };
   if (err) return <div className="selfie"><p className="pass-err" role="alert">{err}</p><button type="button" className="btn btn-ghost" onClick={onCancel}>Back</button></div>;
   return (
     <div className="selfie">
-      <p className="small">Take a clear photo of <b>your own face</b>. The gate shows this photo to the guard.</p>
-      <div className="selfie-box">
-        <video ref={video} playsInline muted autoPlay hidden={!!shot} />{shot ? <img src={shot} alt="Your photo" /> : <span className="selfie-oval" aria-hidden="true" />}
+      <p className="small">{M.title}</p>
+      <div className={`selfie-box ${mode}`}>
+        <video ref={video} playsInline muted autoPlay hidden={!!shot} className={M.mirror ? "mirror" : ""} />
+        {shot ? <img src={shot} alt="Your photo" /> : <span className={mode === "face" ? "selfie-oval" : "card-frame"} aria-hidden="true" />}
       </div>
-      {!shot && <p className="small muted">Face in the oval · no cap or mask · good light</p>}
+      {!shot && <p className="small muted">{M.tip}</p>}
       {warn && <p className="pass-err" role="alert">{warn}</p>}
       <div className="selfie-btns">
         {shot ? <>
@@ -174,9 +185,10 @@ function PassForm({ compact }) {
     if (!r.ok) return setErr(r.error || "Something went wrong. Try again.");
     setStep("camera");
   };
-  const finish = async selfie => {
+  const [selfie, setSelfie] = useState("");
+  const finish = async card => {
     setStep("form"); setBusy(true); setErr("");
-    const r = await askServer({ id: uid, name: name.trim(), selfie });
+    const r = await askServer({ id: uid, name: name.trim(), selfie, card });
     if (!r.ok) { setBusy(false); return setErr(r.error || "Something went wrong. Try again."); }
     try {
       const blob = await drawPass({ ...r.pass, photo: selfie });
@@ -196,7 +208,8 @@ function PassForm({ compact }) {
       </div>
     </div>
   );
-  if (step === "camera") return <SelfieCam onPhoto={finish} onCancel={() => setStep("form")} />;
+  if (step === "camera") return <PhotoCam key="face" mode="face" onPhoto={b => { setSelfie(b); setStep("card"); }} onCancel={() => setStep("form")} />;
+  if (step === "card") return <PhotoCam key="card" mode="card" onPhoto={finish} onCancel={() => setStep("camera")} />;
   return (
     <form className={`pass-form${compact ? " compact" : ""}`} onSubmit={submit} noValidate>
       <label><span>UU ID</span>
@@ -206,7 +219,7 @@ function PassForm({ compact }) {
         <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Rahul Kumar" autoComplete="name" maxLength={80} required />
       </label>
       <label className="check"><input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} />
-        <span>This pass is for me only. I will take a live photo of my own face, and I understand the pass can be downloaded <b>once</b>.</span></label>
+        <span>This pass is for me only. I will take a live photo of my own face and of my college ID card, and I understand the pass can be downloaded <b>once</b>.</span></label>
       {err && <p className="pass-err" role="alert">{err}</p>}
       <button className="btn" disabled={busy}>{busy ? "Please wait…" : "Next: take my photo"}</button>
       <p className="small muted">Lost it or can't download? Visit the SYNERGY desk with your college ID card.</p>
@@ -223,7 +236,7 @@ export function GetPass() {
         <div className="glass reveal">
           <p className="kicker">Entry pass · SYNERGY 2026</p>
           <h2>Get your pass</h2>
-          <p className="muted">Every United University student gets one personal QR pass. Enter your UU ID and full name, take a live photo of your face, and download it.</p>
+          <p className="muted">Every United University student gets one personal QR pass. Enter your UU ID and full name, take a live photo of your face and your college ID card, and download it.</p>
           <PassForm />
         </div>
         <div className="poster-pair reveal">
