@@ -126,6 +126,13 @@
   .result { position:fixed; inset:0; z-index:20; display:none; flex-direction:column; align-items:center; gap:14px; padding:max(18px,env(safe-area-inset-top)) 18px calc(18px + var(--safe-b)); overflow:auto; text-align:center; }
   .result.on { display:flex; animation:pop .28s cubic-bezier(.2,.9,.3,1.2); }
   @keyframes pop { from { opacity:0; transform:scale(.96); } }
+  .result.check .actions { position:sticky; bottom:calc(-18px - var(--safe-b)); margin:0 -18px calc(-18px - var(--safe-b)); padding:12px 18px calc(14px + var(--safe-b)); background:linear-gradient(transparent, rgba(4,10,26,.96) 22%); width:calc(100% + 36px); max-width:none; }
+  .result.check .who .pics img, .result.check .who .pics .nophoto { width:min(132px,34vw); border-radius:14px; }
+  .result.check .who .ph.card img { width:min(250px,64vw); }
+  .result.check .who b { font-size:1.2rem; } .result.check #next { padding:10px; font-size:.9rem; opacity:.85; }
+  .result.check .hint { font-size:.85rem; }
+  .result.check { background:radial-gradient(120% 80% at 50% 0%,#1f5fbf,#06142e 70%); }
+  .result .btn.allow { background:linear-gradient(100deg,#13b46a,#0d8a50); color:#fff; font-size:1.15rem; padding:18px; box-shadow:0 14px 40px -10px rgba(19,180,106,.7); }
   .result.ok   { background:radial-gradient(120% 80% at 50% 0%,#139a5b,#062a19 70%); }
   .result.warn { background:radial-gradient(120% 80% at 50% 0%,#9a6a10,#2a1c05 70%); }
   .result.bad  { background:radial-gradient(120% 80% at 50% 0%,#b3122e,#2a0710 70%); }
@@ -243,7 +250,8 @@
   <div class="actions">
     <div class="auto" id="auto" hidden><i></i></div>
     <p class="auto-note" id="autoNote" hidden>Next scan starts automatically · tap the photo to hold</p>
-    <button class="btn danger" id="flag" hidden>Wrong person: refuse and block this pass</button>
+    <button class="btn allow" id="allow" hidden>✓ Verified · Allow entry</button>
+    <button class="btn danger" id="flag" hidden>✗ Wrong person: refuse and block this pass</button>
     <button class="btn" id="next">Next scan</button>
   </div>
 </div>
@@ -375,9 +383,10 @@ const ICON = {
   warn: '<svg viewBox="0 0 48 48"><path d="M24 12v15M24 35v.5"/></svg>',
   bad: '<svg viewBox="0 0 48 48"><path d="M15 15l18 18M33 15L15 33"/></svg>',
   out: '<svg viewBox="0 0 48 48"><path d="M14 24h20M26 15l9 9-9 9"/></svg>',
+  check: '<svg viewBox="0 0 48 48"><path d="M6 24s7-11 18-11 18 11 18 11-7 11-18 11S6 24 6 24z"/><circle cx="24" cy="24" r="5"/></svg>',
   busy: "",
 };
-let current = null, autoTimer = 0, held = false;
+let current = null, autoTimer = 0, held = false, verified = false, pending = null;
 function result(kind, verdict, why, p, hint, canFlag) {
   current = p; clearTimeout(autoTimer); held = false;
   $("result").className = `result on ${kind}`;
@@ -391,14 +400,15 @@ function result(kind, verdict, why, p, hint, canFlag) {
     + (!p.photo && !p.selfie ? `<div class="nophoto wide">No photo at all: check their college ID card very carefully</div>` : "")
     + `
     <b>${esc(p.name)}</b><div class="meta"><span class="chip mono">${esc(p.id)}</span><span class="chip">Course ${esc(p.course)}</span></div>` : "";
-  $("flag").hidden = !canFlag;
+  $("flag").hidden = !canFlag; $("allow").hidden = kind !== "check"; $("next").textContent = kind === "check" ? "Cancel" : "Next scan";
   $("next").hidden = kind === "busy";
   // a clean ALLOW moves on by itself after a few seconds; refusals and warnings always wait for the guard
-  const auto = kind === "ok" || kind === "out";
+  const auto = kind === "ok" || kind === "out" || (verified && kind === "warn");   // after the guard's OK, move on by itself
   $("auto").hidden = $("autoNote").hidden = !auto;
   $("auto").classList.remove("run"); void $("auto").offsetWidth;
-  if (auto) { $("auto").style.setProperty("--t", "6s"); $("auto").classList.add("run"); autoTimer = setTimeout(() => { if (!held) $("next").click(); }, 6000); }
-  if (kind !== "busy") { navigator.vibrate?.(kind === "ok" || kind === "out" ? 80 : [220, 80, 220]); tone(kind === "out" ? "ok" : kind); }
+  const ms = verified ? 1800 : 6000; if (kind !== "busy") verified = false;
+  if (auto) { $("auto").style.setProperty("--t", ms / 1000 + "s"); $("auto").classList.add("run"); autoTimer = setTimeout(() => { if (!held) $("next").click(); }, ms); }
+  if (kind !== "busy") { navigator.vibrate?.(kind === "ok" || kind === "out" || kind === "check" ? 80 : [220, 80, 220]); tone(kind === "out" || kind === "check" ? "ok" : kind); }
   if (cam) { cam.paused = true; $("camBox").classList.add("paused"); }
 }
 $("who").addEventListener("click", e => {                 // tap a photo: full screen, to read the ID card or check a face
@@ -408,9 +418,13 @@ $("who").addEventListener("click", e => {                 // tap a photo: full s
 });
 $("who").onclick = () => { if (!$("auto").hidden && !held) { held = true; clearTimeout(autoTimer); $("auto").classList.remove("run"); $("autoNote").textContent = "Held · tap Next scan when done"; } };
 $("next").onclick = () => {
-  clearTimeout(autoTimer); $("result").className = "result"; $("autoNote").textContent = "Next scan starts automatically · tap the photo to hold";
+  pending = null; clearTimeout(autoTimer); $("result").className = "result"; $("autoNote").textContent = "Next scan starts automatically · tap the photo to hold";
   if (cam) { cam.paused = false; $("camBox").classList.remove("paused"); }
   stats();
+};
+$("allow").onclick = () => {          // the guard has matched the faces and the ID card: now record the entry
+  if (!pending) return; const pnd = pending; pending = null; verified = true;
+  handle(pnd.text, pnd.manual, true);
 };
 $("flag").onclick = async () => {
   clearTimeout(autoTimer);
@@ -421,7 +435,7 @@ $("flag").onclick = async () => {
 };
 
 /* ---------------- scanning */
-async function handle(text, manual) {
+async function handle(text, manual, confirmed) {
   unlockAudio();
   $("camBox").classList.remove("flash"); void $("camBox").offsetWidth; $("camBox").classList.add("flash");
   let id, qr = null;
@@ -437,11 +451,18 @@ async function handle(text, manual) {
   if (!p) { refused(); return result("bad", "NOT ON LIST", "This ID is not in the student list.", null, "Do not allow entry. Send to the SYNERGY desk."); }
   result("busy", "Checking…", "", p, "");
   let r;
-  try { r = await api(link.u, manual ? { action: "gate.scan", code: link.c, id } : { action: "gate.scan", code: link.c, qr }, 8000); setNet(true); }
+  const preview = !isExit() && !confirmed;   // entry gates: check and show photos first, record only after the guard's OK
+  try { r = await api(link.u, { action: "gate.scan", code: link.c, ...(manual ? { id } : { qr }), ...(preview ? { preview: true } : {}) }, 8000); setNet(true); }
   catch { setNet(false); return offline(p); }
   if (r.revoked) return wipe(r.error);
   if (r.person) p = { ...p, name: r.person.name || p.name, course: r.person.course || p.course, photo: r.person.photo, selfie: r.person.selfie, card: r.person.card };
   if (!r.ok) return result("bad", "ERROR", r.error, p, "Try again, or send to the SYNERGY desk.");
+  if (r.status === "check") {
+    pending = { text, manual };
+    return result("check", r.reentry ? "VERIFY · COMING BACK" : "VERIFY", "Pass is valid. Match the person with the photos, then allow.", p,
+      p.selfie || p.photo ? "Face = selfie (and university photo, if real). Their ID card = ID card photo. Tap to zoom." : "No photo on file: check their college ID card very carefully.", true);
+  }
+  pending = null;
   const seen = ls.get("seen", {});
   switch (r.status) {
     case "admitted":
