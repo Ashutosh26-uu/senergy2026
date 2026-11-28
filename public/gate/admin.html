@@ -40,6 +40,8 @@
   .gctl .g.closed { border-color: rgba(255,59,78,.6); background: rgba(255,59,78,.08); }
   .gctl .g b { display: block; } .gctl .g small { color: var(--muted, #a9a3c2); }
   .btn.ok { background: #0f4f33; border: 1px solid var(--ok); }
+  .thumbs { display:flex; gap:8px; margin-bottom:6px; } .thumbs figure { margin:0; text-align:center; font-size:.65rem; color:var(--muted,#a9a3c2); }
+  .thumbs img, .nothumb { display:grid; place-items:center; width:64px; height:80px; object-fit:cover; border-radius:8px; border:1px solid var(--line); }
   .tag.on { background: rgba(22,193,114,.18); color: var(--ok); } .tag.off { background: rgba(255,59,78,.18); color: var(--bad); }
   .panel { display: none; flex-direction: column; gap: 14px; } .panel.on { display: flex; }
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: none; place-items: center; padding: 16px; z-index: 5; }
@@ -250,7 +252,7 @@ $("openAll").onclick = async () => { await call("admin.gatesOpenAll", { open: tr
 /* passes */
 async function find() {
   const r = await call("admin.passFind", { q: $("q").value }); if (!r.ok) return alert(r.error);
-  table("passTable", ["Pass", "Status", "Entries", ""], r.passes.map(p => `<tr><td><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.id)} · course ${esc(p.course)} · v${esc(p.version)}</span><br><span class="small muted">${p.downloaded ? "Downloaded online " + esc(p.downloaded) : "Not downloaded online"}</span></td>
+  table("passTable", ["Pass", "Status", "Entries", ""], r.passes.map(p => `<tr><td><div class="thumbs">${[["selfie", "Selfie"], ["photo", "Univ. photo"]].map(([k, l]) => p[k] ? `<figure><img alt="" src="data:image/jpeg;base64,${p[k]}"><figcaption>${l}</figcaption></figure>` : `<figure><span class="nothumb">none</span><figcaption>${l}</figcaption></figure>`).join("")}</div><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.id)} · course ${esc(p.course)} · v${esc(p.version)}</span><br><span class="small muted">${p.downloaded ? "Downloaded online " + esc(p.downloaded) : "Not downloaded online"}</span></td>
     <td><span class="tag ${p.status === "blocked" ? "off" : "on"}">${p.status === "blocked" ? "Blocked" : "Active"}</span>${p.note ? `<br><span class="small muted">${esc(p.note)}</span>` : ""}</td>
     <td class="small">${p.entries.map(e => `${e.dir === "OUT" ? "⬅ out" : "➡ in"} ${esc(e.day)} ${esc(e.time)} · ${esc(e.gate)}${e.method === "typed ID" ? " (typed)" : ""}`).join("<br>") || "none"}</td>
     <td class="row">${p.status === "blocked" ? `<button class="btn ghost" data-act="unblock" data-id="${esc(p.id)}">Unblock</button>` : `<button class="btn danger" data-act="block" data-id="${esc(p.id)}">Block</button>`}

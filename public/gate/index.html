@@ -143,6 +143,11 @@
   .who .ph { position:relative; }
   .who img, .who .nophoto { width:min(220px,58vw); aspect-ratio:4/5; object-fit:cover; border-radius:24px; background:#2a2533; border:4px solid rgba(255,255,255,.9); box-shadow:0 24px 60px -20px rgba(0,0,0,.8); }
   .result.ok .who img { box-shadow:0 0 0 6px rgba(25,210,126,.35), 0 24px 60px -20px rgba(0,0,0,.8); }
+  .who .pics { display:flex; gap:10px; justify-content:center; width:100%; }
+  .who figure { margin:0; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .who figcaption { font-size:.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.8); }
+  .who .pics img, .who .pics .nophoto { width:min(168px,42vw); border-radius:18px; }
+  .who .nophoto.wide { width:100%; aspect-ratio:auto; padding:10px; border-radius:14px; }
   .who .nophoto { display:grid; place-items:center; padding:16px; font-weight:800; color:var(--warn); font-size:.95rem; border-style:dashed; }
   .who b { font-size:1.45rem; line-height:1.2; }
   .who .meta { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
@@ -334,7 +339,7 @@ async function boot() {
   roster = await store.get("roster");
   if (h && (!roster || (await store.get("packKey")) !== h.packKey)) {
     if (!h.packReady) { $("loadingTitle").textContent = "Waiting for the admin"; $("loadingText").textContent = "The student list has not been uploaded yet. Retrying…"; setTimeout(boot, 15000); return; }
-    $("loadingTitle").textContent = "Loading the student list"; $("loadingText").textContent = "About 9 MB, only this once.";
+    $("loadingTitle").textContent = "Loading the student list"; $("loadingText").textContent = "Only this once.";
     let p;
     try { p = await api(link.u, { action: "gate.pack", code: link.c }, 120000); }
     catch { $("loadingText").textContent = "Slow or no internet. Retrying…"; setTimeout(boot, 8000); return; }
@@ -377,7 +382,10 @@ function result(kind, verdict, why, p, hint, canFlag) {
   $("verdict").textContent = verdict; $("why").textContent = why || "";
   $("hint").textContent = hint || ""; $("hint").hidden = !hint;
   $("who").hidden = !p;
-  $("who").innerHTML = p ? `<div class="ph">${p.photo ? `<img alt="" src="data:image/jpeg;base64,${p.photo}">` : `<div class="nophoto">NO PHOTO ON FILE<br>Check their college ID card</div>`}</div>
+  const pic = (b64, label) => `<figure class="ph">${b64 ? `<img alt="" src="data:image/jpeg;base64,${b64}">` : `<div class="nophoto">${label === "Selfie" ? "NO SELFIE" : "NO UNIVERSITY PHOTO"}</div>`}<figcaption>${label}</figcaption></figure>`;
+  $("who").innerHTML = p ? `<div class="pics">${pic(p.selfie, "Selfie")}${pic(p.photo, "University photo")}</div>`
+    + (!p.photo && !p.selfie ? `<div class="nophoto wide">No photo at all: check their college ID card very carefully</div>` : "")
+    + `
     <b>${esc(p.name)}</b><div class="meta"><span class="chip mono">${esc(p.id)}</span><span class="chip">Course ${esc(p.course)}</span></div>` : "";
   $("flag").hidden = !canFlag;
   $("next").hidden = kind === "busy";
@@ -410,28 +418,29 @@ async function handle(text, manual) {
   let id, qr = null;
   if (manual) {
     id = text.trim().toUpperCase();
-    if (!/^UU\d{9}$/.test(id)) return result("bad", "NOT AN ID", "IDs look like UU26 followed by 7 digits.", null, "");
+    if (!/^UU(?:\d{9}|-?PG\d{6,7})$/.test(id)) return result("bad", "NOT AN ID", "IDs look like UU26XXXXXXX or UU-PG230001.", null, "");
   } else {
     const v = await verifyPass(text);
     if (v.bad) { refused(); addLog("bad", "Invalid QR"); return result("bad", "INVALID PASS", v.bad, null, "Do not allow entry."); }
     id = v.id; qr = v.text;
   }
-  const p = roster[id] || null;
+  let p = roster[id] || null;
   if (!p) { refused(); return result("bad", "NOT ON LIST", "This ID is not in the student list.", null, "Do not allow entry. Send to the SYNERGY desk."); }
   result("busy", "Checking…", "", p, "");
   let r;
   try { r = await api(link.u, manual ? { action: "gate.scan", code: link.c, id } : { action: "gate.scan", code: link.c, qr }, 8000); setNet(true); }
   catch { setNet(false); return offline(p); }
   if (r.revoked) return wipe(r.error);
+  if (r.person) p = { ...p, name: r.person.name || p.name, course: r.person.course || p.course, photo: r.person.photo, selfie: r.person.selfie };
   if (!r.ok) return result("bad", "ERROR", r.error, p, "Try again, or send to the SYNERGY desk.");
   const seen = ls.get("seen", {});
   switch (r.status) {
     case "admitted":
       seen[`${today()}|${id}|${r.entries || 1}`] = nowIST(); ls.set("seen", seen);
-      addLog(manual || !p.photo ? "warn" : "ok", `${p.name}${r.reentry ? " · re-entry" : ""}${manual ? " · typed ID" : ""}`);
-      return result(manual || !p.photo ? "warn" : "ok", r.reentry ? "WELCOME BACK" : "ALLOW",
+      addLog(manual || !(p.photo || p.selfie) ? "warn" : "ok", `${p.name}${r.reentry ? " · re-entry" : ""}${manual ? " · typed ID" : ""}`);
+      return result(manual || !(p.photo || p.selfie) ? "warn" : "ok", r.reentry ? "WELCOME BACK" : "ALLOW",
         manual ? "Typed ID: check the face very carefully." : r.reentry ? `Re-entry recorded (entry ${r.entries} today).` : `Entry to ${place()} recorded.`, p,
-        p.photo ? "Match the face with the photo before letting them in." : "No photo on file: check their college ID card.", true);
+        p.selfie || p.photo ? "Match the face with the SELFIE. If the university photo is a real photo, it must match too. Ask for the college ID card." : "No photo on file: check their college ID card.", true);
     case "exited":
       seen[`${today()}|${id}|out|${Date.now()}`] = nowIST(); ls.set("seen", seen);
       addLog("ok", `${p.name} · went out`);

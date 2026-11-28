@@ -790,3 +790,12 @@ section[id], .ev26 { scroll-margin-top: 90px; }
 @media (max-width: 520px) { .pass-modal { padding: 24px 16px 18px; } }
 .foot-staff a { padding: 6px 14px !important; border: 1px solid var(--line); border-radius: 999px; font-size: .85rem; }
 .foot-staff a:hover { border-color: var(--cyan); }
+
+/* ---------- live selfie ---------- */
+.selfie { display: grid; gap: 12px; margin-top: 18px; justify-items: center; text-align: center; }
+.selfie-box { position: relative; width: min(300px, 100%); aspect-ratio: 4 / 5; border-radius: 18px; overflow: hidden; background: #000; border: 1px solid var(--line); }
+.selfie-box video, .selfie-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.selfie-box video { transform: scaleX(-1); }
+.selfie-oval { position: absolute; left: 11%; right: 11%; top: 9%; height: 76%; border-radius: 50%; border: 3px dashed rgba(255,255,255,.85); box-shadow: 0 0 0 999px rgba(0,0,0,.45); pointer-events: none; }
+.selfie-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.selfie-btns .btn { border: 0; cursor: pointer; font: inherit; font-weight: 700; }

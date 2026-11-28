@@ -1,6 +1,6 @@
 // "Get your pass": a student enters their UU ID and full name, the gate server checks them and hands
 // over the signed pass once; the card is drawn here as a PNG.
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { A, FEST, PASS_SERVER } from "../data/site.js";
 import { Modal, useViewer } from "./ui.jsx";
 
@@ -86,33 +86,100 @@ async function drawPass(p) {
   return new Promise(ok => cv.toBlob(b => ok(b), "image/png"));
 }
 
-async function askServer(id, name) {
-  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 25000);
+async function askServer(body) {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 30000);
   try {
-    const r = await fetch(PASS_SERVER, { method: "POST", body: JSON.stringify({ action: "pass.get", id, name }), signal: ctl.signal, redirect: "follow" });
+    const r = await fetch(PASS_SERVER, { method: "POST", body: JSON.stringify({ action: "pass.get", ...body }), signal: ctl.signal, redirect: "follow" });
     if (!r.ok) throw new Error();
     return await r.json();
   } catch { return { ok: false, error: "Could not reach the pass server. Check your internet and try again." }; }
   finally { clearTimeout(t); }
 }
+const ID_OK = /^UU(?:\d{9}|-?PG\d{6,7})$/;
+
+/* ---------- live camera: the face goes in the oval, the photo is cropped to it ---------- */
+function SelfieCam({ onPhoto, onCancel }) {
+  const video = useRef(), [err, setErr] = useState(""), [shot, setShot] = useState(null), [warn, setWarn] = useState(""), [bad, setBad] = useState(false);
+  useEffect(() => {
+    let stream, stop = false;
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false });
+        if (stop) return stream.getTracks().forEach(t => t.stop());
+        video.current.srcObject = stream; await video.current.play();
+      } catch { setErr("Camera blocked. Allow the camera for this site in your browser settings, then try again."); }
+    })();
+    return () => { stop = true; stream?.getTracks().forEach(t => t.stop()); };
+  }, []);
+  const capture = async () => {
+    const v = video.current; if (!v || v.videoWidth < 160) return setWarn("The camera is still starting. Try again in a moment.");
+    const vw = v.videoWidth, vh = v.videoHeight;
+    // the part of the frame visible in the 4:5 box (object-fit: cover), then the oval inside it
+    let sw, sh, sx, sy; if (vw / vh > 0.8) { sh = vh; sw = vh * 0.8; sx = (vw - sw) / 2; sy = 0; } else { sw = vw; sh = vw / 0.8; sx = 0; sy = (vh - sh) / 2; }
+    let cw = sw * 0.78, ch = cw * 1.25, cx = sx + (sw - cw) / 2, cy = sy + sh * 0.47 - ch / 2;
+    try {                                                           // where the browser can find the face, centre on it
+      if ("FaceDetector" in window) {
+        const f = (await new window.FaceDetector({ fastMode: true, maxDetectedFaces: 1 }).detect(v))[0];
+        if (f) { const b = f.boundingBox; ch = Math.min(vh, b.height * 2.1); cw = ch * 0.8; cx = b.x + b.width / 2 - cw / 2; cy = b.y + b.height * 0.42 - ch / 2; }
+      }
+    } catch { /* no face detector: the oval crop is used */ }
+    cx = Math.max(0, Math.min(vw - cw, cx)); cy = Math.max(0, Math.min(vh - ch, cy));
+    const c = document.createElement("canvas"); c.width = 300; c.height = 375;
+    const x = c.getContext("2d"); x.drawImage(v, cx, cy, cw, ch, 0, 0, 300, 375);
+    const px = x.getImageData(60, 60, 180, 220).data; let sum = 0; for (let i = 0; i < px.length; i += 16) sum += px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11;
+    const light = sum / (px.length / 16);
+    setBad(light < 30 || light > 245);
+    setWarn(light < 55 ? "Too dark: face a light or a window and take it again." : light > 235 ? "Too bright: step away from the light and take it again." : "");
+    let q = 0.78, url = c.toDataURL("image/jpeg", q);
+    while (url.length > 58000 && q > 0.4) { q -= 0.08; url = c.toDataURL("image/jpeg", q); }
+    setShot(url);
+  };
+  if (err) return <div className="selfie"><p className="pass-err" role="alert">{err}</p><button type="button" className="btn btn-ghost" onClick={onCancel}>Back</button></div>;
+  return (
+    <div className="selfie">
+      <p className="small">Take a clear photo of <b>your own face</b>. The gate shows this photo to the guard.</p>
+      <div className="selfie-box">
+        <video ref={video} playsInline muted autoPlay hidden={!!shot} />{shot ? <img src={shot} alt="Your photo" /> : <span className="selfie-oval" aria-hidden="true" />}
+      </div>
+      {!shot && <p className="small muted">Face in the oval · no cap or mask · good light</p>}
+      {warn && <p className="pass-err" role="alert">{warn}</p>}
+      <div className="selfie-btns">
+        {shot ? <>
+          <button type="button" className="btn" disabled={bad} onClick={() => onPhoto(shot.split(",")[1])}>Use this photo</button>
+          <button type="button" className="btn btn-ghost" onClick={() => { setShot(null); setWarn(""); setBad(false); }}>Retake</button>
+        </> : <>
+          <button type="button" className="btn" onClick={capture}>📸 Take photo</button>
+          <button type="button" className="btn btn-ghost" onClick={onCancel}>Back</button>
+        </>}
+      </div>
+    </div>
+  );
+}
 
 /* ---------- the form (used in the section and in the popup) ---------- */
 function PassForm({ compact }) {
   const [id, setId] = useState(""), [name, setName] = useState(""), [agree, setAgree] = useState(false);
-  const [busy, setBusy] = useState(false), [err, setErr] = useState(""), [done, setDone] = useState(null);
+  const [busy, setBusy] = useState(false), [err, setErr] = useState(""), [done, setDone] = useState(null), [step, setStep] = useState("form");
   useEffect(() => () => done && URL.revokeObjectURL(done.url), [done]);
   const save = d => { const a = document.createElement("a"); a.href = d.url; a.download = d.file; document.body.appendChild(a); a.click(); a.remove(); };
+  const uid = id.trim().toUpperCase().replace(/\s+/g, "");
   const submit = async e => {
     e.preventDefault(); setErr("");
-    const uid = id.trim().toUpperCase().replace(/\s+/g, "");
-    if (!/^UU\d{9}$/.test(uid)) return setErr("Enter your UU ID exactly as on your college ID, like UU26XXXXXXX.");
+    if (!ID_OK.test(uid)) return setErr("Enter your UU ID exactly as on your college ID, like UU26XXXXXXX.");
     if (name.trim().length < 3) return setErr("Enter your full name as on your college ID.");
     if (!agree) return setErr("Please confirm the pass is for you only.");
     setBusy(true);
-    const r = await askServer(uid, name.trim());
+    const r = await askServer({ id: uid, name: name.trim(), check: true });
+    setBusy(false);
+    if (!r.ok) return setErr(r.error || "Something went wrong. Try again.");
+    setStep("camera");
+  };
+  const finish = async selfie => {
+    setStep("form"); setBusy(true); setErr("");
+    const r = await askServer({ id: uid, name: name.trim(), selfie });
     if (!r.ok) { setBusy(false); return setErr(r.error || "Something went wrong. Try again."); }
     try {
-      const blob = await drawPass(r.pass);
+      const blob = await drawPass({ ...r.pass, photo: selfie });
       const d = { url: URL.createObjectURL(blob), file: `SYNERGY-2026-pass-${r.pass.id}.png`, name: r.pass.name };
       setDone(d); save(d);
     } catch { setErr("Your pass was issued but could not be drawn on this device. Please visit the SYNERGY desk."); }
@@ -122,13 +189,14 @@ function PassForm({ compact }) {
     <div className="pass-done">
       <img src={done.url} alt={`SYNERGY 2026 entry pass for ${done.name}`} />
       <div>
-        <h3>Your pass is ready, {done.name.split(" ")[0]}!</h3>
+        <h3>Your pass is ready, {done.name.replace(/^Dr\.\s*/, "").split(" ")[0]}!</h3>
         <p>It has been saved to your downloads. <b>Keep it safe now:</b> each pass can be downloaded only once. On a phone, you can also press and hold the picture to save it.</p>
         <button className="btn" onClick={() => save(done)}>Save the pass again</button>
-        <p className="small muted">Show the QR at a university gate, then at the fest venue gate. Do not share it: the first scan wins and a copy is refused.</p>
+        <p className="small muted">Show the QR at a university gate, then at the fest venue gate, with your college ID card. Do not share it: the guard checks your face and a copy is refused.</p>
       </div>
     </div>
   );
+  if (step === "camera") return <SelfieCam onPhoto={finish} onCancel={() => setStep("form")} />;
   return (
     <form className={`pass-form${compact ? " compact" : ""}`} onSubmit={submit} noValidate>
       <label><span>UU ID</span>
@@ -138,9 +206,9 @@ function PassForm({ compact }) {
         <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Rahul Kumar" autoComplete="name" maxLength={80} required />
       </label>
       <label className="check"><input type="checkbox" checked={agree} onChange={e => setAgree(e.target.checked)} />
-        <span>This pass is for me only. I understand it can be downloaded <b>once</b>, and that a shared or copied pass is refused at the gate.</span></label>
+        <span>This pass is for me only. I will take a live photo of my own face, and I understand the pass can be downloaded <b>once</b>.</span></label>
       {err && <p className="pass-err" role="alert">{err}</p>}
-      <button className="btn" disabled={busy}>{busy ? "Checking…" : "Download my pass"}</button>
+      <button className="btn" disabled={busy}>{busy ? "Please wait…" : "Next: take my photo"}</button>
       <p className="small muted">Lost it or can't download? Visit the SYNERGY desk with your college ID card.</p>
     </form>
   );
@@ -155,7 +223,7 @@ export function GetPass() {
         <div className="glass reveal">
           <p className="kicker">Entry pass · SYNERGY 2026</p>
           <h2>Get your pass</h2>
-          <p className="muted">Every United University student gets one personal QR pass. Enter your UU ID and your full name to download it.</p>
+          <p className="muted">Every United University student gets one personal QR pass. Enter your UU ID and full name, take a live photo of your face, and download it.</p>
           <PassForm />
         </div>
         <div className="poster-pair reveal">

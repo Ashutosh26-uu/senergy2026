@@ -19,7 +19,7 @@ export async function api(url, body, timeoutMs = 20000) {
 
 /** Checks a pass QR offline: format and Ed25519 signature. Returns {id, ver} or {bad}. */
 export async function verifyPass(text) {
-  const m = /^SYN26\.(UU\d{9})\.(\d{1,3})\.([A-Za-z0-9_-]{80,90})$/.exec(String(text).trim());
+  const m = /^SYN26\.(UU(?:\d{9}|-?PG\d{6,7}))\.(\d{1,3})\.([A-Za-z0-9_-]{80,90})$/.exec(String(text).trim());
   if (!m) return { bad: "Not a SYNERGY 2026 pass." };
   const [, id, ver, sig] = m;
   let ok = false;
