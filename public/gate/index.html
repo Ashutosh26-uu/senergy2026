@@ -126,13 +126,13 @@
   .result { position:fixed; inset:0; z-index:20; display:none; flex-direction:column; align-items:center; gap:14px; padding:max(18px,env(safe-area-inset-top)) 18px calc(18px + var(--safe-b)); overflow:auto; text-align:center; }
   .result.on { display:flex; animation:pop .28s cubic-bezier(.2,.9,.3,1.2); }
   @keyframes pop { from { opacity:0; transform:scale(.96); } }
-  .result.check .actions { position:sticky; bottom:calc(-18px - var(--safe-b)); margin:0 -18px calc(-18px - var(--safe-b)); padding:12px 18px calc(14px + var(--safe-b)); background:linear-gradient(transparent, rgba(4,10,26,.96) 22%); width:calc(100% + 36px); max-width:none; }
+  .result.check .actions { position:sticky; bottom:calc(-18px - var(--safe-b)); margin:0 -18px calc(-18px - var(--safe-b)); padding:12px 18px calc(14px + var(--safe-b)); background:linear-gradient(transparent, rgba(6,42,25,.96) 22%); width:calc(100% + 36px); max-width:none; }
   .result.check .who .pics img, .result.check .who .pics .nophoto { width:min(132px,34vw); border-radius:14px; }
   .result.check .who .ph.card img { width:min(250px,64vw); }
-  .result.check .who b { font-size:1.2rem; } .result.check #next { padding:10px; font-size:.9rem; opacity:.85; }
+  .result.check .who b { font-size:1.2rem; } .result.check #next { padding:10px; font-size:.9rem; background:rgba(0,0,0,.25); color:#fff; border:1px solid rgba(255,255,255,.4); }
   .result.check .hint { font-size:.85rem; }
-  .result.check { background:radial-gradient(120% 80% at 50% 0%,#1f5fbf,#06142e 70%); }
-  .result .btn.allow { background:linear-gradient(100deg,#13b46a,#0d8a50); color:#fff; font-size:1.15rem; padding:18px; box-shadow:0 14px 40px -10px rgba(19,180,106,.7); }
+  .result.check { background:radial-gradient(120% 80% at 50% 0%,#139a5b,#062a19 70%); }   /* same green as ALLOW, as before */
+  .result .btn.allow { font-size:1.15rem; padding:18px; }
   .result.ok   { background:radial-gradient(120% 80% at 50% 0%,#139a5b,#062a19 70%); }
   .result.warn { background:radial-gradient(120% 80% at 50% 0%,#9a6a10,#2a1c05 70%); }
   .result.bad  { background:radial-gradient(120% 80% at 50% 0%,#b3122e,#2a0710 70%); }
