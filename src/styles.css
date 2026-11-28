@@ -801,3 +801,11 @@ section[id], .ev26 { scroll-margin-top: 90px; }
 .selfie-oval { position: absolute; left: 11%; right: 11%; top: 9%; height: 76%; border-radius: 50%; border: 3px dashed rgba(255,255,255,.85); box-shadow: 0 0 0 999px rgba(0,0,0,.45); pointer-events: none; }
 .selfie-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
 .selfie-btns .btn { border: 0; cursor: pointer; font: inherit; font-weight: 700; }
+
+/* footer: room for the floating buttons, credit always readable on phones */
+.foot { padding-bottom: 104px; }
+@media (max-width: 640px) {
+  .foot-bottom { flex-direction: column; text-align: center; gap: 6px; }
+  .credit { font-size: .95rem; }
+  .credit a { font-size: 1rem; }
+}

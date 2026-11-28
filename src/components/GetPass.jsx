@@ -257,11 +257,12 @@ export function PassPopup() {
   const [open, setOpen] = useState(false);
   useEffect(() => { const on = () => setOpen(true); addEventListener("synergy:pass", on); return () => removeEventListener("synergy:pass", on); }, []);
   const close = useCallback(() => setOpen(false), []);
-  const [hide, setHide] = useState(false);   // the section's own form is on screen: no need for the button
+  const [hide, setHide] = useState(false);
   useEffect(() => {
-    const el = document.getElementById("pass"); if (!el) return;
-    const io = new IntersectionObserver(([e]) => setHide(e.isIntersecting), { threshold: 0.2 });
-    io.observe(el); return () => io.disconnect();
+    const on = new Set();                       // hide over the pass form and over the footer (so the credit is never covered)
+    const io = new IntersectionObserver(es => { es.forEach(e => e.isIntersecting ? on.add(e.target) : on.delete(e.target)); setHide(on.size > 0); }, { threshold: 0.05 });
+    ["pass"].map(id => document.getElementById(id)).concat([document.querySelector(".foot")]).filter(Boolean).forEach(el => io.observe(el));
+    return () => io.disconnect();
   }, []);
   return <>
     <button className={`pass-fab${hide ? " hide" : ""}`} onClick={openPass}><span aria-hidden="true">🎟</span> Get your pass</button>

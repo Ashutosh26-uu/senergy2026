@@ -126,13 +126,14 @@
   .result { position:fixed; inset:0; z-index:20; display:none; flex-direction:column; align-items:center; gap:14px; padding:max(18px,env(safe-area-inset-top)) 18px calc(18px + var(--safe-b)); overflow:auto; text-align:center; }
   .result.on { display:flex; animation:pop .28s cubic-bezier(.2,.9,.3,1.2); }
   @keyframes pop { from { opacity:0; transform:scale(.96); } }
-  .result.check .actions { position:sticky; bottom:calc(-18px - var(--safe-b)); margin:0 -18px calc(-18px - var(--safe-b)); padding:12px 18px calc(14px + var(--safe-b)); background:linear-gradient(transparent, rgba(6,42,25,.96) 22%); width:calc(100% + 36px); max-width:none; }
+  .result.check .actions { position:sticky; bottom:calc(-18px - var(--safe-b)); margin:0 -18px calc(-18px - var(--safe-b)); padding:12px 18px calc(14px + var(--safe-b)); background:linear-gradient(transparent, rgba(7,6,11,.97) 22%); width:calc(100% + 36px); max-width:none; }
   .result.check .who .pics img, .result.check .who .pics .nophoto { width:min(132px,34vw); border-radius:14px; }
   .result.check .who .ph.card img { width:min(250px,64vw); }
-  .result.check .who b { font-size:1.2rem; } .result.check #next { padding:10px; font-size:.9rem; background:rgba(0,0,0,.25); color:#fff; border:1px solid rgba(255,255,255,.4); }
+  .result.check .who b { font-size:1.2rem; } .result.check #next { padding:10px; font-size:.9rem; background:transparent; color:#fff; border:1px solid rgba(255,255,255,.28); border-radius:999px; }
   .result.check .hint { font-size:.85rem; }
-  .result.check { background:radial-gradient(120% 80% at 50% 0%,#139a5b,#062a19 70%); }   /* same green as ALLOW, as before */
-  .result .btn.allow { font-size:1.15rem; padding:18px; }
+  .result.check { background:radial-gradient(40% 30% at 15% 8%,rgba(255,46,136,.32),transparent 70%),radial-gradient(45% 35% at 90% 18%,rgba(41,224,255,.22),transparent 70%),radial-gradient(55% 40% at 50% 100%,rgba(163,92,255,.28),transparent 70%),#07060b; }   /* the website colours */
+  .result .btn.allow { font-size:1.15rem; padding:18px; background:var(--grad); color:#fff; box-shadow:0 14px 40px -10px rgba(255,46,136,.75); }
+  .result.check #flag { background:transparent; border:1px solid rgba(255,255,255,.28); border-radius:999px; }
   .result.ok   { background:radial-gradient(120% 80% at 50% 0%,#139a5b,#062a19 70%); }
   .result.warn { background:radial-gradient(120% 80% at 50% 0%,#9a6a10,#2a1c05 70%); }
   .result.bad  { background:radial-gradient(120% 80% at 50% 0%,#b3122e,#2a0710 70%); }
